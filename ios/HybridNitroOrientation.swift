@@ -7,8 +7,18 @@
 
 import UIKit
 import Foundation
+import React
+import NitroModules
 
 class HybridNitroOrientation: HybridNitroOrientationSpec {
+    func lockToLandscape() throws {
+        lockTo(.landscapeLeft, orientationName: "landscapeLeft")
+    }
+    
+    func getAutoRotateState() throws -> Bool {
+        return false
+    }
+    
     private var lastOrientation: String = "unknown"
     private var lastDeviceOrientation: String = "unknown"
     
@@ -70,39 +80,35 @@ class HybridNitroOrientation: HybridNitroOrientationSpec {
         }
     }
     
-    private func sendEvent(_ name: String, orientation: String) {
-        let params = ["orientation": orientation]
-        if let bridge = NitroModules.applicationContext {
-            bridge.emitDeviceEvent(name, body: params)
-        }
-    }
+    func sendEvent(_ name: String, orientation: String) {
+            }
     
     // ---- API public cho JS ----
-    override func getOrientation() -> String {
-        return mapUIOrientation()
+     func getOrientation() -> String {
+        return lastOrientation
     }
     
-    override func getDeviceOrientation() -> String {
+     func getDeviceOrientation() -> String {
         return lastDeviceOrientation
     }
     
-    override func lockToPortrait() {
+     func lockToPortrait() {
         lockTo(.portrait, orientationName: "portrait")
     }
     
-    override func lockToLandscapeLeft() {
+     func lockToLandscapeLeft() {
         lockTo(.landscapeLeft, orientationName: "landscapeLeft")
     }
     
-    override func lockToLandscapeRight() {
+     func lockToLandscapeRight() {
         lockTo(.landscapeRight, orientationName: "landscapeRight")
     }
     
-    override func lockToPortraitUpsideDown() {
+     func lockToPortraitUpsideDown() {
         lockTo(.portraitUpsideDown, orientationName: "portraitUpsideDown")
     }
     
-    override func unlockAllOrientations() {
+     func unlockAllOrientations() {
         // iOS cần quản lý ở AppDelegate / SceneDelegate
         requestOrientation(.all, orientationName: "unknown")
     }
@@ -130,7 +136,7 @@ class HybridNitroOrientation: HybridNitroOrientationSpec {
         }
     }
     
-    override func release() {
+    func release() {
         if let obs = orientationObserver {
             NotificationCenter.default.removeObserver(obs)
         }
