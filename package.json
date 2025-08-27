@@ -1,6 +1,6 @@
 {
   "name": "react-native-nitro-orientation",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "react-native-nitro-orientation is a react native package built with Nitro",
   "main": "lib/index",
   "module": "lib/index",

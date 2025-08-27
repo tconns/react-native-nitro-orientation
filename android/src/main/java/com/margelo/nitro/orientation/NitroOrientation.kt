@@ -17,8 +17,6 @@ import android.view.Surface
 import android.view.WindowManager
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.modules.core.DeviceEventManagerModule
-import com.margelo.nitro.NitroModules
-import com.margelo.nitro.orientation.HybridNitroOrientationSpec
 import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
