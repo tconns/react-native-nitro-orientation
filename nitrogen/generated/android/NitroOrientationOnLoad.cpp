@@ -18,22 +18,22 @@
 #include "JHybridNitroOrientationSpec.hpp"
 #include <NitroModules/DefaultConstructableObject.hpp>
 
-namespace margelo::nitro::nitroorientation {
+namespace margelo::nitro::orientation {
 
 int initialize(JavaVM* vm) {
   using namespace margelo::nitro;
-  using namespace margelo::nitro::nitroorientation;
+  using namespace margelo::nitro::orientation;
   using namespace facebook;
 
   return facebook::jni::initialize(vm, [] {
     // Register native JNI methods
-    margelo::nitro::nitroorientation::JHybridNitroOrientationSpec::registerNatives();
+    margelo::nitro::orientation::JHybridNitroOrientationSpec::registerNatives();
 
     // Register Nitro Hybrid Objects
     HybridObjectRegistry::registerHybridObjectConstructor(
       "NitroOrientation",
       []() -> std::shared_ptr<HybridObject> {
-        static DefaultConstructableObject<JHybridNitroOrientationSpec::javaobject> object("com/nitroorientation/HybridNitroOrientation");
+        static DefaultConstructableObject<JHybridNitroOrientationSpec::javaobject> object("com/margelo/nitro/orientation/NitroOrientation");
         auto instance = object.create();
         auto globalRef = jni::make_global(instance);
         return globalRef->cthis()->shared();
@@ -42,4 +42,4 @@ int initialize(JavaVM* vm) {
   });
 }
 
-} // namespace margelo::nitro::nitroorientation
+} // namespace margelo::nitro::orientation

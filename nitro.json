@@ -1,24 +1,19 @@
 {
   "$schema": "https://nitro.margelo.com/nitro.schema.json",
-  "cxxNamespace": [
-    "nitroorientation"
-  ],
+  "cxxNamespace": ["orientation"],
   "ios": {
     "iosModuleName": "NitroOrientation"
   },
   "android": {
-    "androidNamespace": [
-      "nitroorientation"
-    ],
+    "androidNamespace": ["orientation"],
     "androidCxxLibName": "NitroOrientation"
   },
   "autolinking": {
     "NitroOrientation": {
-      "swift": "HybridNitroOrientation",
-      "kotlin": "HybridNitroOrientation"
+      "swift": "NitroOrientation",
+      "kotlin": "NitroOrientation"
     }
   },
-  "ignorePaths": [
-    "**/node_modules"
-  ]
+  "ignorePaths": ["**/node_modules"],
+  "gitAttributesGeneratedFlag": false
 }

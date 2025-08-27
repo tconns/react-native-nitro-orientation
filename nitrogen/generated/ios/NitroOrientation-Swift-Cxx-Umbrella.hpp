@@ -9,7 +9,7 @@
 
 // Forward declarations of C++ defined types
 // Forward declaration of `HybridNitroOrientationSpec` to properly resolve imports.
-namespace margelo::nitro::nitroorientation { class HybridNitroOrientationSpec; }
+namespace margelo::nitro::orientation { class HybridNitroOrientationSpec; }
 
 // Include C++ defined types
 #include "HybridNitroOrientationSpec.hpp"

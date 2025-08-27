@@ -1,25 +1,5 @@
 import { NitroModules } from 'react-native-nitro-modules'
-import type { NitroOrientation as NitroOrientationSpec } from './specs/nitro-orientation.nitro'
-// import { DeviceEventEmitter } from 'react-native'
-
-// const run = () => {
-//   const sub1 = DeviceEventEmitter.addListener('orientationDidChange', event => {
-//     console.log('UI Orientation changed:', event.orientation);
-//   });
-
-//   const sub2 = DeviceEventEmitter.addListener(
-//     'deviceOrientationDidChange',
-//     event => {
-//       console.log('Device Orientation changed:', event.orientation);
-//     },
-//   );
-
-//   const sub3 = DeviceEventEmitter.addListener('lockDidChange', event => {
-//     console.log('Lock state changed:', event.orientation);
-//   });
-// };
-
-// run();
+import type { NitroOrientation as NitroOrientationSpec } from './specs/NitroOrientation.nitro'
 
 export const NitroOrientation =
   NitroModules.createHybridObject<NitroOrientationSpec>('NitroOrientation')

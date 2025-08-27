@@ -19,11 +19,11 @@ import NitroModules
  */
 open class HybridNitroOrientationSpec_cxx {
   /**
-   * The Swift <> C++ bridge's namespace (`margelo::nitro::nitroorientation::bridge::swift`)
+   * The Swift <> C++ bridge's namespace (`margelo::nitro::orientation::bridge::swift`)
    * from `NitroOrientation-Swift-Cxx-Bridge.hpp`.
    * This contains specialized C++ templates, and C++ helper functions that can be accessed from Swift.
    */
-  public typealias bridge = margelo.nitro.nitroorientation.bridge.swift
+  public typealias bridge = margelo.nitro.orientation.bridge.swift
 
   /**
    * Holds an instance of the `HybridNitroOrientationSpec` Swift protocol.

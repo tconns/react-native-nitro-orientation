@@ -9,7 +9,7 @@
 
 // Forward declarations of C++ defined types
 // Forward declaration of `HybridNitroOrientationSpec` to properly resolve imports.
-namespace margelo::nitro::nitroorientation { class HybridNitroOrientationSpec; }
+namespace margelo::nitro::orientation { class HybridNitroOrientationSpec; }
 
 // Forward declarations of Swift defined types
 // Forward declaration of `HybridNitroOrientationSpec_cxx` to properly resolve imports.
@@ -26,7 +26,7 @@ namespace NitroOrientation { class HybridNitroOrientationSpec_cxx; }
  * Contains specialized versions of C++ templated types so they can be accessed from Swift,
  * as well as helper functions to interact with those C++ types from Swift.
  */
-namespace margelo::nitro::nitroorientation::bridge::swift {
+namespace margelo::nitro::orientation::bridge::swift {
 
   // pragma MARK: std::shared_ptr<HybridNitroOrientationSpec>
   /**
@@ -67,4 +67,4 @@ namespace margelo::nitro::nitroorientation::bridge::swift {
     return Result<bool>::withError(error);
   }
 
-} // namespace margelo::nitro::nitroorientation::bridge::swift
+} // namespace margelo::nitro::orientation::bridge::swift

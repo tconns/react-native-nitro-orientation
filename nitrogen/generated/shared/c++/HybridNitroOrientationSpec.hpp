@@ -17,7 +17,7 @@
 
 #include <string>
 
-namespace margelo::nitro::nitroorientation {
+namespace margelo::nitro::orientation {
 
   using namespace margelo::nitro;
 
@@ -67,4 +67,4 @@ namespace margelo::nitro::nitroorientation {
       static constexpr auto TAG = "NitroOrientation";
   };
 
-} // namespace margelo::nitro::nitroorientation
+} // namespace margelo::nitro::orientation

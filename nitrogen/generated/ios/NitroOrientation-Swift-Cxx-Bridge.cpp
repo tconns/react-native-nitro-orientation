@@ -11,15 +11,15 @@
 #include "HybridNitroOrientationSpecSwift.hpp"
 #include "NitroOrientation-Swift-Cxx-Umbrella.hpp"
 
-namespace margelo::nitro::nitroorientation::bridge::swift {
+namespace margelo::nitro::orientation::bridge::swift {
 
   // pragma MARK: std::shared_ptr<HybridNitroOrientationSpec>
   std::shared_ptr<HybridNitroOrientationSpec> create_std__shared_ptr_HybridNitroOrientationSpec_(void* _Nonnull swiftUnsafePointer) noexcept {
     NitroOrientation::HybridNitroOrientationSpec_cxx swiftPart = NitroOrientation::HybridNitroOrientationSpec_cxx::fromUnsafe(swiftUnsafePointer);
-    return std::make_shared<margelo::nitro::nitroorientation::HybridNitroOrientationSpecSwift>(swiftPart);
+    return std::make_shared<margelo::nitro::orientation::HybridNitroOrientationSpecSwift>(swiftPart);
   }
   void* _Nonnull get_std__shared_ptr_HybridNitroOrientationSpec_(std__shared_ptr_HybridNitroOrientationSpec_ cppType) noexcept {
-    std::shared_ptr<margelo::nitro::nitroorientation::HybridNitroOrientationSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::nitroorientation::HybridNitroOrientationSpecSwift>(cppType);
+    std::shared_ptr<margelo::nitro::orientation::HybridNitroOrientationSpecSwift> swiftWrapper = std::dynamic_pointer_cast<margelo::nitro::orientation::HybridNitroOrientationSpecSwift>(cppType);
     #ifdef NITRO_DEBUG
     if (swiftWrapper == nullptr) [[unlikely]] {
       throw std::runtime_error("Class \"HybridNitroOrientationSpec\" is not implemented in Swift!");
@@ -29,4 +29,4 @@ namespace margelo::nitro::nitroorientation::bridge::swift {
     return swiftPart.toUnsafe();
   }
 
-} // namespace margelo::nitro::nitroorientation::bridge::swift
+} // namespace margelo::nitro::orientation::bridge::swift

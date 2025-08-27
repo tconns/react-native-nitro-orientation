@@ -14,14 +14,14 @@
 
 
 
-namespace margelo::nitro::nitroorientation {
+namespace margelo::nitro::orientation {
 
   using namespace facebook;
 
   class JHybridNitroOrientationSpec: public jni::HybridClass<JHybridNitroOrientationSpec, JHybridObject>,
                                      public virtual HybridNitroOrientationSpec {
   public:
-    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/nitroorientation/HybridNitroOrientationSpec;";
+    static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/orientation/HybridNitroOrientationSpec;";
     static jni::local_ref<jhybriddata> initHybrid(jni::alias_ref<jhybridobject> jThis);
     static void registerNatives();
 
@@ -69,4 +69,4 @@ namespace margelo::nitro::nitroorientation {
     jni::global_ref<JHybridNitroOrientationSpec::javaobject> _javaPart;
   };
 
-} // namespace margelo::nitro::nitroorientation
+} // namespace margelo::nitro::orientation

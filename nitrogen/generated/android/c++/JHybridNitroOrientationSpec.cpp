@@ -11,7 +11,7 @@
 
 #include <string>
 
-namespace margelo::nitro::nitroorientation {
+namespace margelo::nitro::orientation {
 
   jni::local_ref<JHybridNitroOrientationSpec::jhybriddata> JHybridNitroOrientationSpec::initHybrid(jni::alias_ref<jhybridobject> jThis) {
     return makeCxxInstance(jThis);
@@ -77,4 +77,4 @@ namespace margelo::nitro::nitroorientation {
     return static_cast<bool>(__result);
   }
 
-} // namespace margelo::nitro::nitroorientation
+} // namespace margelo::nitro::orientation

@@ -7,5 +7,5 @@
 
 #include "HybridNitroOrientationSpecSwift.hpp"
 
-namespace margelo::nitro::nitroorientation {
-} // namespace margelo::nitro::nitroorientation
+namespace margelo::nitro::orientation {
+} // namespace margelo::nitro::orientation

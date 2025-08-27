@@ -18,7 +18,7 @@ namespace NitroOrientation { class HybridNitroOrientationSpec_cxx; }
 
 #include "NitroOrientation-Swift-Cxx-Umbrella.hpp"
 
-namespace margelo::nitro::nitroorientation {
+namespace margelo::nitro::orientation {
 
   /**
    * The C++ part of HybridNitroOrientationSpec_cxx.swift.
@@ -122,4 +122,4 @@ namespace margelo::nitro::nitroorientation {
     NitroOrientation::HybridNitroOrientationSpec_cxx _swiftPart;
   };
 
-} // namespace margelo::nitro::nitroorientation
+} // namespace margelo::nitro::orientation

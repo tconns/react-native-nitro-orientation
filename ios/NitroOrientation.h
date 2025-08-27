@@ -10,6 +10,6 @@
 #import <React/RCTEventEmitter.h>
 
 @interface NitroOrientation : RCTEventEmitter <RCTBridgeModule>
-+ (void)setOrientation: (UIInterfaceOrientationMask)orientation;
++ (void)setOrientation:(UIInterfaceOrientationMask)orientation;
 + (UIInterfaceOrientationMask)getOrientation;
 @end

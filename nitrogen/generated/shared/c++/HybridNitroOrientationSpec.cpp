@@ -7,7 +7,7 @@
 
 #include "HybridNitroOrientationSpec.hpp"
 
-namespace margelo::nitro::nitroorientation {
+namespace margelo::nitro::orientation {
 
   void HybridNitroOrientationSpec::loadHybridMethods() {
     // load base methods/properties
@@ -26,4 +26,4 @@ namespace margelo::nitro::nitroorientation {
     });
   }
 
-} // namespace margelo::nitro::nitroorientation
+} // namespace margelo::nitro::orientation

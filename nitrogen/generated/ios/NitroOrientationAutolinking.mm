@@ -19,7 +19,7 @@
 
 + (void) load {
   using namespace margelo::nitro;
-  using namespace margelo::nitro::nitroorientation;
+  using namespace margelo::nitro::orientation;
 
   HybridObjectRegistry::registerHybridObjectConstructor(
     "NitroOrientation",

@@ -8,7 +8,7 @@
 #include <jni.h>
 #include <NitroModules/NitroDefines.hpp>
 
-namespace margelo::nitro::nitroorientation {
+namespace margelo::nitro::orientation {
 
   /**
    * Initializes the native (C++) part of NitroOrientation, and autolinks all Hybrid Objects.
@@ -16,10 +16,10 @@ namespace margelo::nitro::nitroorientation {
    * Example:
    * ```cpp (cpp-adapter.cpp)
    * JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
-   *   return margelo::nitro::nitroorientation::initialize(vm);
+   *   return margelo::nitro::orientation::initialize(vm);
    * }
    * ```
    */
   int initialize(JavaVM* vm);
 
-} // namespace margelo::nitro::nitroorientation
+} // namespace margelo::nitro::orientation
