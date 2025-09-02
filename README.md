@@ -11,7 +11,7 @@ This module provides native-level orientation detection and locking capabilities
 - Read UI orientation and device (sensor) orientation
 - Lock to portrait / portraitUpsideDown / landscapeLeft / landscapeRight
 - Unlock to allow all orientations
-- Emit events when orientation or lock state changes
+- Listen to orientation change events with a simple callback API
 - Built with Nitro Modules for native performance and autolinking support
 
 ## Requirements
@@ -110,6 +110,7 @@ import {
   lockToPortrait,
   lockToLandscape,
   unlockAllOrientations,
+  Orientation,
 } from 'react-native-nitro-orientation'
 
 // UI orientation
@@ -122,9 +123,21 @@ const device = getDeviceOrientation()
 lockToPortrait()
 lockToLandscape()
 unlockAllOrientations()
+
+// Listen to orientation changes
+const handleOrientationChange = (orientation: 'portrait' | 'landscape') => {
+  console.log('Orientation changed to:', orientation)
+}
+
+Orientation.addOrientationListener(handleOrientationChange)
+
+// Don't forget to remove the listener when component unmounts
+Orientation.removeOrientationListener(handleOrientationChange)
 ```
 
 ## API
+
+### Orientation Control
 
 - `getOrientation(): string` — returns one of: `portrait`, `portraitUpsideDown`, `landscapeLeft`, `landscapeRight`, `unknown`
 - `getDeviceOrientation(): string` — orientation from device sensors
@@ -136,28 +149,33 @@ unlockAllOrientations()
 - `unlockAllOrientations(): void`
 - `getAutoRotateState(): boolean` — (Android) returns whether Auto-Rotate is enabled
 
+### Event Listening
+
+- `Orientation.addOrientationListener(callback)` — add a listener for orientation changes
+- `Orientation.removeOrientationListener(callback)` — remove a previously added listener
+
+The callback receives one parameter: `orientation: 'portrait' | 'landscape'`
+
 ## Events
 
-The module emits events via `DeviceEventEmitter` (payload: `{ orientation: string }`):
-
-- `orientationDidChange` — UI orientation changed
-- `deviceOrientationDidChange` — device sensor orientation changed
-- `lockDidChange` — lock state changed (will emit `unknown` when unlocked)
-
-Example listener:
+The module provides a simple event listening API through the `Orientation` manager:
 
 ```ts
 import { useEffect } from 'react'
-import { DeviceEventEmitter } from 'react-native'
+import { Orientation } from 'react-native-nitro-orientation'
 
 useEffect(() => {
-  const handler = (payload: { orientation: string }) => {
-    console.log('orientation event', payload.orientation)
+  const handleOrientationChange = (orientation: 'portrait' | 'landscape') => {
+    console.log('Orientation changed to:', orientation)
   }
 
-  const sub = DeviceEventEmitter.addListener('orientationDidChange', handler)
+  // Add listener
+  Orientation.addOrientationListener(handleOrientationChange)
 
-  return () => sub.remove()
+  // Cleanup
+  return () => {
+    Orientation.removeOrientationListener(handleOrientationChange)
+  }
 }, [])
 ```
 
@@ -168,6 +186,7 @@ import {
   lockToLandscapeLeft,
   lockToLandscapeRight,
   lockToLandscape,
+  Orientation,
 } from 'react-native-nitro-orientation'
 
 // Lock to landscape left
@@ -178,6 +197,25 @@ lockToLandscapeRight()
 
 // Sensor-based landscape (Android)
 lockToLandscape()
+
+// Create a custom hook for orientation changes
+const useOrientation = () => {
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait')
+
+  useEffect(() => {
+    const handleChange = (newOrientation: 'portrait' | 'landscape') => {
+      setOrientation(newOrientation)
+    }
+
+    Orientation.addOrientationListener(handleChange)
+
+    return () => {
+      Orientation.removeOrientationListener(handleChange)
+    }
+  }, [])
+
+  return orientation
+}
 ```
 
 ## Platform Support
@@ -194,10 +232,12 @@ lockToLandscape()
 
 - Events not emitted on Android: ensure `NitroOrientationActivityLifecycle` is registered in your `Application` and Nitro runtime provides `applicationContext`.
 - On iOS, if `requestGeometryUpdate` does not change UI orientation: verify `Info.plist` and `supportedInterfaceOrientationsFor` implementation.
+- Make sure to remove orientation listeners when components unmount to avoid memory leaks.
 
 ## Migration / notes
 
 - Orientation strings used by the module: `portrait`, `portraitUpsideDown`, `landscapeLeft`, `landscapeRight`, `unknown`.
+- Event callbacks receive simplified orientation values: `'portrait' | 'landscape'`.
 - When updating spec files in `src/specs/*.nitro.ts`, regenerate Nitro artifacts:
 
 ```bash
