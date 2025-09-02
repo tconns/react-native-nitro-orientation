@@ -11,6 +11,9 @@ import React
 import NitroModules
 
 class NitroOrientation: HybridNitroOrientationSpec {
+
+    private var listener: (String) -> Void = { _ in }
+
     func lockToLandscape() throws {
         lockTo(.landscapeLeft, orientationName: "landscapeLeft")
     }
@@ -81,9 +84,15 @@ class NitroOrientation: HybridNitroOrientationSpec {
     }
     
     func sendEvent(_ name: String, orientation: String) {
-            }
+        listener(orientation)
+    }
     
     // ---- API public cho JS ----
+
+    func setChangeListener(callback: @escaping (String) -> Void) {
+        listener = callback
+    }
+
      func getOrientation() -> String {
         return lastOrientation
     }

@@ -15,6 +15,7 @@ namespace margelo::nitro::orientation { class HybridNitroOrientationSpec; }
 #include "HybridNitroOrientationSpec.hpp"
 #include <NitroModules/Result.hpp>
 #include <exception>
+#include <functional>
 #include <memory>
 #include <string>
 

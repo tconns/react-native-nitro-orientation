@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat
 class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners {
   private val reactContext = NitroModules.applicationContext ?: throw Exception("Context is null")
 
+    private var orientationCallback: ((String) -> Unit)? = null
     // ---- Constants (tên event/chuỗi orientation dùng lại nhiều) ----
     private object Events {
         const val ORIENTATION_DID_CHANGE = "orientationDidChange"
@@ -58,11 +59,7 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
     private fun canEmit(lastAt: Long) = now() - lastAt >= minEmitIntervalMs
 
     private fun sendEvent(event: String, orientation: String) {
-        if (!reactContext.hasActiveReactInstance()) return
-        val params = Arguments.createMap().apply { putString("orientation", orientation) }
-        reactContext
-            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-            .emit(event, params)
+        orientationCallback?.invoke(orientation)
     }
 
     private fun notifyUiOrientationChange(orientation: String, force: Boolean = false) {
@@ -233,6 +230,10 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
             Settings.System.ACCELEROMETER_ROTATION, 0
         ) == 1
         return isAutoRotateEnabled
+    }
+
+    override fun setChangeListener(listener: (String) -> Unit) {
+        orientationCallback = listener
     }
 
     override fun start() {

@@ -15,6 +15,7 @@ namespace NitroOrientation { class HybridNitroOrientationSpec_cxx; }
 
 
 #include <string>
+#include <functional>
 
 #include "NitroOrientation-Swift-Cxx-Umbrella.hpp"
 
@@ -116,6 +117,12 @@ namespace margelo::nitro::orientation {
       }
       auto __value = std::move(__result.value());
       return __value;
+    }
+    inline void setChangeListener(const std::function<void(const std::string& /* orientation */)>& listener) override {
+      auto __result = _swiftPart.setChangeListener(listener);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
     }
 
   private:

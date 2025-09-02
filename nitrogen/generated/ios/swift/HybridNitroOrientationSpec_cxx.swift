@@ -210,4 +210,20 @@ open class HybridNitroOrientationSpec_cxx {
       return bridge.create_Result_bool_(__exceptionPtr)
     }
   }
+  
+  @inline(__always)
+  public final func setChangeListener(listener: bridge.Func_void_std__string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setChangeListener(listener: { () -> (String) -> Void in
+        let __wrappedFunction = bridge.wrap_Func_void_std__string(listener)
+        return { (__orientation: String) -> Void in
+          __wrappedFunction.call(std.string(__orientation))
+        }
+      }())
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
 }

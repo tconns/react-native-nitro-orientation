@@ -23,6 +23,7 @@ public protocol HybridNitroOrientationSpec_protocol: HybridObject {
   func lockToLandscapeRight() throws -> Void
   func unlockAllOrientations() throws -> Void
   func getAutoRotateState() throws -> Bool
+  func setChangeListener(listener: @escaping (_ orientation: String) -> Void) throws -> Void
 }
 
 /// See ``HybridNitroOrientationSpec``

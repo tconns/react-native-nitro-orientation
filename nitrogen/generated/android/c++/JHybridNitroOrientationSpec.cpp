@@ -10,6 +10,8 @@
 
 
 #include <string>
+#include <functional>
+#include "JFunc_void_std__string.hpp"
 
 namespace margelo::nitro::orientation {
 
@@ -75,6 +77,10 @@ namespace margelo::nitro::orientation {
     static const auto method = javaClassStatic()->getMethod<jboolean()>("getAutoRotateState");
     auto __result = method(_javaPart);
     return static_cast<bool>(__result);
+  }
+  void JHybridNitroOrientationSpec::setChangeListener(const std::function<void(const std::string& /* orientation */)>& listener) {
+    static const auto method = javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_std__string::javaobject> /* listener */)>("setChangeListener_cxx");
+    method(_javaPart, JFunc_void_std__string_cxx::fromCpp(listener));
   }
 
 } // namespace margelo::nitro::orientation

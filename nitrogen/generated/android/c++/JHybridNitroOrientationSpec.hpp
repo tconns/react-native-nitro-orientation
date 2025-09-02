@@ -62,6 +62,7 @@ namespace margelo::nitro::orientation {
     void lockToLandscapeRight() override;
     void unlockAllOrientations() override;
     bool getAutoRotateState() override;
+    void setChangeListener(const std::function<void(const std::string& /* orientation */)>& listener) override;
 
   private:
     friend HybridBase;

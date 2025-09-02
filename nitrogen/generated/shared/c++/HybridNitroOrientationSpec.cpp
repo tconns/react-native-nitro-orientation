@@ -23,6 +23,7 @@ namespace margelo::nitro::orientation {
       prototype.registerHybridMethod("lockToLandscapeRight", &HybridNitroOrientationSpec::lockToLandscapeRight);
       prototype.registerHybridMethod("unlockAllOrientations", &HybridNitroOrientationSpec::unlockAllOrientations);
       prototype.registerHybridMethod("getAutoRotateState", &HybridNitroOrientationSpec::getAutoRotateState);
+      prototype.registerHybridMethod("setChangeListener", &HybridNitroOrientationSpec::setChangeListener);
     });
   }
 

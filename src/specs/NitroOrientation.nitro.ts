@@ -11,4 +11,5 @@ export interface NitroOrientation
   lockToLandscapeRight(): void
   unlockAllOrientations(): void
   getAutoRotateState(): boolean
+  setChangeListener(listener: (orientation: string) => void): void
 }

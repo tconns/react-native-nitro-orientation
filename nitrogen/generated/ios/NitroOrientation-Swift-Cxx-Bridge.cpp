@@ -13,6 +13,14 @@
 
 namespace margelo::nitro::orientation::bridge::swift {
 
+  // pragma MARK: std::function<void(const std::string& /* orientation */)>
+  Func_void_std__string create_Func_void_std__string(void* _Nonnull swiftClosureWrapper) noexcept {
+    auto swiftClosure = NitroOrientation::Func_void_std__string::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const std::string& orientation) mutable -> void {
+      swiftClosure.call(orientation);
+    };
+  }
+  
   // pragma MARK: std::shared_ptr<HybridNitroOrientationSpec>
   std::shared_ptr<HybridNitroOrientationSpec> create_std__shared_ptr_HybridNitroOrientationSpec_(void* _Nonnull swiftUnsafePointer) noexcept {
     NitroOrientation::HybridNitroOrientationSpec_cxx swiftPart = NitroOrientation::HybridNitroOrientationSpec_cxx::fromUnsafe(swiftUnsafePointer);

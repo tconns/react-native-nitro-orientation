@@ -16,6 +16,7 @@
 
 
 #include <string>
+#include <functional>
 
 namespace margelo::nitro::orientation {
 
@@ -57,6 +58,7 @@ namespace margelo::nitro::orientation {
       virtual void lockToLandscapeRight() = 0;
       virtual void unlockAllOrientations() = 0;
       virtual bool getAutoRotateState() = 0;
+      virtual void setChangeListener(const std::function<void(const std::string& /* orientation */)>& listener) = 0;
 
     protected:
       // Hybrid Setup

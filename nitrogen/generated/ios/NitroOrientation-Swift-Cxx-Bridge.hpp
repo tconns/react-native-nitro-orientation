@@ -19,6 +19,7 @@ namespace NitroOrientation { class HybridNitroOrientationSpec_cxx; }
 #include "HybridNitroOrientationSpec.hpp"
 #include <NitroModules/Result.hpp>
 #include <exception>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -28,6 +29,28 @@ namespace NitroOrientation { class HybridNitroOrientationSpec_cxx; }
  */
 namespace margelo::nitro::orientation::bridge::swift {
 
+  // pragma MARK: std::function<void(const std::string& /* orientation */)>
+  /**
+   * Specialized version of `std::function<void(const std::string&)>`.
+   */
+  using Func_void_std__string = std::function<void(const std::string& /* orientation */)>;
+  /**
+   * Wrapper class for a `std::function<void(const std::string& / * orientation * /)>`, this can be used from Swift.
+   */
+  class Func_void_std__string_Wrapper final {
+  public:
+    explicit Func_void_std__string_Wrapper(std::function<void(const std::string& /* orientation */)>&& func): _function(std::make_unique<std::function<void(const std::string& /* orientation */)>>(std::move(func))) {}
+    inline void call(std::string orientation) const noexcept {
+      _function->operator()(orientation);
+    }
+  private:
+    std::unique_ptr<std::function<void(const std::string& /* orientation */)>> _function;
+  } SWIFT_NONCOPYABLE;
+  Func_void_std__string create_Func_void_std__string(void* _Nonnull swiftClosureWrapper) noexcept;
+  inline Func_void_std__string_Wrapper wrap_Func_void_std__string(Func_void_std__string value) noexcept {
+    return Func_void_std__string_Wrapper(std::move(value));
+  }
+  
   // pragma MARK: std::shared_ptr<HybridNitroOrientationSpec>
   /**
    * Specialized version of `std::shared_ptr<HybridNitroOrientationSpec>`.
