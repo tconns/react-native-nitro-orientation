@@ -8,6 +8,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class NitroOrientationActivityLifecycle private constructor() : ActivityLifecycleCallbacks {
     private var orientationListeners: NitroOrientationListeners? = null
+    private fun debugLog(message: String) {
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, message)
+        }
+    }
     fun registerListeners(listener: NitroOrientationListeners) {
         orientationListeners = listener
         if (activeCount.get() == 1) {
@@ -16,38 +21,38 @@ class NitroOrientationActivityLifecycle private constructor() : ActivityLifecycl
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        Log.d(TAG, "onActivityCreated")
+        debugLog("onActivityCreated")
     }
 
     override fun onActivityStarted(activity: Activity) {
-        Log.d(TAG, "onActivityStarted")
+        debugLog("onActivityStarted")
     }
 
     override fun onActivityResumed(activity: Activity) {
-        Log.d(TAG, "onActivityResumed")
+        debugLog("onActivityResumed")
         if (activeCount.incrementAndGet() == 1) {
-            Log.d(TAG, "Start orientation")
+            debugLog("Start orientation")
             orientationListeners?.start()
         }
     }
 
     override fun onActivityPaused(activity: Activity) {
-        Log.d(TAG, "onActivityPaused")
+        debugLog("onActivityPaused")
     }
 
     override fun onActivityStopped(activity: Activity) {
-        Log.d(TAG, "onActivityStopped")
+        debugLog("onActivityStopped")
         if (activeCount.decrementAndGet() == 0) {
             orientationListeners?.stop()
         }
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
-        Log.d(TAG, "onActivitySaveInstanceState")
+        debugLog("onActivitySaveInstanceState")
     }
 
     override fun onActivityDestroyed(activity: Activity) {
-        Log.d(TAG, "onActivityDestroyed")
+        debugLog("onActivityDestroyed")
         if (activeCount.get() == 0) {
             orientationListeners?.release()
         }

@@ -50,6 +50,7 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
     private var lastDeviceEmitAtMs = 0L
     private var lastUiEmitAtMs = 0L
     private val minEmitIntervalMs = 120L
+    private var lastStableQuadrant: String = Names.UNKNOWN
 
     private fun now() = SystemClock.uptimeMillis()
 
@@ -80,6 +81,7 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
     }
 
     private fun notifyLockChange(orientation: String) {
+      if (orientation == lockOrientation) return
       lockOrientation = orientation
       sendEvent(Events.LOCK_DID_CHANGE, orientation)
     }
@@ -142,14 +144,16 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
     init {
       orientationListener = object : OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_UI) {
         override fun onOrientationChanged(degrees: Int) {
+          val previousQuadrant = lastStableQuadrant
           val deviceOrientation = when {
             degrees == ORIENTATION_UNKNOWN -> Names.UNKNOWN
-            degrees in 0..5 || degrees in 356..359 -> Names.PORTRAIT
-            degrees in 86..94 -> Names.LANDSCAPE_RIGHT
-            degrees in 176..184 -> Names.PORTRAIT_UPSIDE_DOWN
-            degrees in 266..274 -> Names.LANDSCAPE_LEFT
-            else -> lastDeviceOrientation
+            degrees <= 20 || degrees >= 340 -> Names.PORTRAIT
+            degrees in 70..110 -> Names.LANDSCAPE_RIGHT
+            degrees in 160..200 -> Names.PORTRAIT_UPSIDE_DOWN
+            degrees in 250..290 -> Names.LANDSCAPE_LEFT
+            else -> previousQuadrant
           }
+          lastStableQuadrant = deviceOrientation
           if (deviceOrientation != lastDeviceOrientation) {
             notifyDeviceOrientationChange(deviceOrientation)
           }
@@ -192,7 +196,10 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
       lockTo(ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT, Names.PORTRAIT_UPSIDE_DOWN)
 
     override fun lockToLandscape() =
-      lockTo(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE, Names.LANDSCAPE_LEFT)
+      lockTo(
+        ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE,
+        if (currentUiOrientation() == Names.LANDSCAPE_RIGHT) Names.LANDSCAPE_RIGHT else Names.LANDSCAPE_LEFT
+      )
 
     override fun lockToLandscapeLeft() =
       lockTo(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, Names.LANDSCAPE_LEFT)
