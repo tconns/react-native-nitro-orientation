@@ -12,14 +12,18 @@ import NitroModules
 
 class NitroOrientation: HybridNitroOrientationSpec {
 
-    private var listener: (String) -> Void = { _ in }
+    private var uiOrientationListener: (String) -> Void = { _ in }
+    private var deviceOrientationListener: (String) -> Void = { _ in }
+    private var lockListener: (String) -> Void = { _ in }
+    private var lockOrientation: String = "unknown"
+    private var isLockedValue = false
 
     func lockToLandscape() throws {
         lockTo(.landscapeLeft, orientationName: "landscapeLeft")
     }
     
     func getAutoRotateState() throws -> Bool {
-        return false
+        return true
     }
     
     private var lastOrientation: String = "unknown"
@@ -27,9 +31,26 @@ class NitroOrientation: HybridNitroOrientationSpec {
     
     private var orientationObserver: NSObjectProtocol?
     
+    private func runOnMainSync<T>(_ work: () -> T) -> T {
+        if Thread.isMainThread {
+            return work()
+        }
+        return DispatchQueue.main.sync(execute: work)
+    }
+    
     override init() {
         super.init()
         
+        // Seed initial state so JS queries are meaningful
+        let initialState = runOnMainSync {
+            return (
+                mapUIOrientation(),
+                mapDeviceOrientation(UIDevice.current.orientation)
+            )
+        }
+        lastOrientation = initialState.0
+        lastDeviceOrientation = initialState.1
+
         // Lắng nghe thay đổi UI orientation
         orientationObserver = NotificationCenter.default.addObserver(
             forName: UIDevice.orientationDidChangeNotification,
@@ -84,13 +105,30 @@ class NitroOrientation: HybridNitroOrientationSpec {
     }
     
     func sendEvent(_ name: String, orientation: String) {
-        listener(orientation)
+        switch name {
+        case "orientationDidChange":
+            uiOrientationListener(orientation)
+        case "deviceOrientationDidChange":
+            deviceOrientationListener(orientation)
+        case "lockDidChange":
+            lockListener(orientation)
+        default:
+            break
+        }
     }
     
     // ---- API public cho JS ----
 
-    func setChangeListener(callback: @escaping (String) -> Void) {
-        listener = callback
+    func setChangeListener(listener: @escaping (String) -> Void) {
+        uiOrientationListener = listener
+    }
+
+    func setDeviceOrientationListener(listener: @escaping (String) -> Void) {
+        deviceOrientationListener = listener
+    }
+
+    func setLockListener(listener: @escaping (String) -> Void) {
+        lockListener = listener
     }
 
      func getOrientation() -> String {
@@ -99,6 +137,14 @@ class NitroOrientation: HybridNitroOrientationSpec {
     
      func getDeviceOrientation() -> String {
         return lastDeviceOrientation
+    }
+
+    func getLockOrientation() -> String {
+        return lockOrientation
+    }
+
+    func isLocked() -> Bool {
+        return isLockedValue
     }
     
      func lockToPortrait() {
@@ -118,7 +164,8 @@ class NitroOrientation: HybridNitroOrientationSpec {
     }
     
      func unlockAllOrientations() {
-        // iOS cần quản lý ở AppDelegate / SceneDelegate
+        isLockedValue = false
+        lockOrientation = "unknown"
         requestOrientation(.all, orientationName: "unknown")
     }
     
@@ -127,19 +174,31 @@ class NitroOrientation: HybridNitroOrientationSpec {
     }
     
     private func requestOrientation(_ mask: UIInterfaceOrientationMask, orientationName: String) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in
+                self?.requestOrientation(mask, orientationName: orientationName)
+            }
+            return
+        }
+        
         if #available(iOS 16.0, *),
            let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
             scene.requestGeometryUpdate(.iOS(interfaceOrientations: mask)) { error in
                 if error == nil {
                     self.lastOrientation = orientationName
+                    self.lockOrientation = orientationName
+                    self.isLockedValue = orientationName != "unknown"
                     self.sendEvent("orientationDidChange", orientation: orientationName)
                     self.sendEvent("lockDidChange", orientation: orientationName)
+                } else {
+                    print("[NitroOrientation] requestGeometryUpdate failed: \(error.localizedDescription)")
                 }
             }
         } else {
-            // fallback iOS < 16 → quản lý qua AppDelegate
-            // thường phải custom supportedInterfaceOrientations
+            // On iOS < 16 this is best-effort and depends on host app orientation handling.
             self.lastOrientation = orientationName
+            self.lockOrientation = orientationName
+            self.isLockedValue = orientationName != "unknown"
             self.sendEvent("orientationDidChange", orientation: orientationName)
             self.sendEvent("lockDidChange", orientation: orientationName)
         }
@@ -150,5 +209,8 @@ class NitroOrientation: HybridNitroOrientationSpec {
             NotificationCenter.default.removeObserver(obs)
         }
         UIDevice.current.endGeneratingDeviceOrientationNotifications()
+        uiOrientationListener = { _ in }
+        deviceOrientationListener = { _ in }
+        lockListener = { _ in }
     } 
 }

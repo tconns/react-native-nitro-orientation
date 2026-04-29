@@ -10,8 +10,14 @@
   },
   "autolinking": {
     "NitroOrientation": {
-      "swift": "NitroOrientation",
-      "kotlin": "NitroOrientation"
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "NitroOrientation"
+      },
+      "android": {
+        "language": "kotlin",
+        "implementationClassName": "NitroOrientation"
+      }
     }
   },
   "ignorePaths": ["**/node_modules"],

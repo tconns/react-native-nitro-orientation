@@ -11,7 +11,7 @@ class NitroOrientationActivityLifecycle private constructor() : ActivityLifecycl
     fun registerListeners(listener: NitroOrientationListeners) {
         orientationListeners = listener
         if (activeCount.get() == 1) {
-            orientationListeners!!.start()
+            orientationListeners?.start()
         }
     }
 
@@ -26,10 +26,8 @@ class NitroOrientationActivityLifecycle private constructor() : ActivityLifecycl
     override fun onActivityResumed(activity: Activity) {
         Log.d(TAG, "onActivityResumed")
         if (activeCount.incrementAndGet() == 1) {
-            if (orientationListeners != null) {
-                Log.d(TAG, "Start orientation")
-                orientationListeners!!.start()
-            }
+            Log.d(TAG, "Start orientation")
+            orientationListeners?.start()
         }
     }
 
@@ -40,9 +38,7 @@ class NitroOrientationActivityLifecycle private constructor() : ActivityLifecycl
     override fun onActivityStopped(activity: Activity) {
         Log.d(TAG, "onActivityStopped")
         if (activeCount.decrementAndGet() == 0) {
-            if (orientationListeners != null) {
-                orientationListeners!!.stop()
-            }
+            orientationListeners?.stop()
         }
     }
 
@@ -53,9 +49,7 @@ class NitroOrientationActivityLifecycle private constructor() : ActivityLifecycl
     override fun onActivityDestroyed(activity: Activity) {
         Log.d(TAG, "onActivityDestroyed")
         if (activeCount.get() == 0) {
-            if (orientationListeners != null) {
-                orientationListeners!!.release()
-            }
+            orientationListeners?.release()
         }
     }
 

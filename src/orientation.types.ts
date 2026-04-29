@@ -7,3 +7,10 @@ export enum OrientationType {
   FACE_DOWN = 'faceDown',
   UNKNOWN = 'unknown',
 }
+
+export type OrientationValue =
+  | 'portrait'
+  | 'portraitUpsideDown'
+  | 'landscapeLeft'
+  | 'landscapeRight'
+  | 'unknown'

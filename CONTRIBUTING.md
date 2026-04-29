@@ -31,7 +31,7 @@ Run **Nitrogen** in following cases:
 To invoke **Nitrogen**, use the following command:
 
 ```sh
-yarn nitrogen
+npx tsc && npx nitrogen --logLevel="debug"
 ```
 
 The [example app](/example/) demonstrates usage of the library. You need to run it to test any changes you make.

@@ -1,273 +1,216 @@
 # react-native-nitro-orientation
 
-Native orientation control for React Native built with Nitro Modules.
+Native orientation utilities for React Native, powered by Nitro Modules.
 
-## Overview
+`react-native-nitro-orientation` provides APIs to:
 
-This module provides native-level orientation detection and locking capabilities for both Android and iOS. It exposes simple JS/TS APIs to read UI and device orientation, lock/unlock orientations, and listen to orientation events emitted from native.
-
-## Features
-
-- Read UI orientation and device (sensor) orientation
-- Lock to portrait / portraitUpsideDown / landscapeLeft / landscapeRight
-- Unlock to allow all orientations
-- Listen to orientation change events with a simple callback API
-- Built with Nitro Modules for native performance and autolinking support
+- read current UI orientation and device orientation
+- lock/unlock orientation modes
+- observe UI/device/lock changes through listeners
 
 ## Requirements
 
-- React Native >= 0.76
-- Node >= 18
-- `react-native-nitro-modules` must be installed (Nitro runtime)
+- React Native `>= 0.76`
+- Node.js `>= 18`
+- `react-native-nitro-modules` `>= 0.35.x`
 
 ## Installation
 
 ```bash
 npm install react-native-nitro-orientation react-native-nitro-modules
-# or
+```
+
+or
+
+```bash
 yarn add react-native-nitro-orientation react-native-nitro-modules
 ```
 
-## Configuration
-
-### iOS
-
-Add the following to your project's AppDelegate.mm:
-
-```diff
-
-+#import <NitroOrientation/NitroOrientation.h>
-
-@implementation AppDelegate
-
-// ...
-
-+- (UIInterfaceOrientationMask)application:(UIApplication *)application supportedInterfaceOrientationsForWindow:(UIWindow *)window {
-+  return [NitroOrientation getOrientation];
-+}
-
-@end
-```
+## Platform setup
 
 ### Android
 
-Add following to android/app/src/main/AndroidManifest.xml
+1. Ensure activity handles orientation config changes:
 
-```diff
-      <activity
-        ....
-+       android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-        android:windowSoftInputMode="adjustResize">
-
-          ....
-
-      </activity>
-
+```xml
+<activity
+  android:name=".MainActivity"
+  android:configChanges="keyboard|keyboardHidden|orientation|screenSize|smallestScreenSize|uiMode"
+  ... />
 ```
 
-Implement onConfigurationChanged method (in MainActivity.kt)
+2. Forward configuration changes in `MainActivity`:
 
 ```kotlin
-
-import android.content.Intent
-import android.content.res.Configuration
-
-// ...
-
-
-class MainActivity : ReactActivity() {
-//...
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        val intent = Intent("onConfigurationChanged")
-        intent.putExtra("newConfig", newConfig)
-        this.sendBroadcast(intent)
-    }
+override fun onConfigurationChanged(newConfig: Configuration) {
+  super.onConfigurationChanged(newConfig)
+  val intent = Intent("onConfigurationChanged")
+  intent.putExtra("newConfig", newConfig)
+  sendBroadcast(intent)
 }
 ```
 
-Add following to MainApplication.kt
+3. Register lifecycle callbacks in `MainApplication`:
 
 ```kotlin
-
-import com.margelo.nitro.orientation.NitroOrientationActivityLifecycle
-//...
-
-class MainApplication : Application(), ReactApplication {
-  override fun onCreate() {
-    //...
-    registerActivityLifecycleCallbacks(NitroOrientationActivityLifecycle.instance)
-  }
-}
+registerActivityLifecycleCallbacks(NitroOrientationActivityLifecycle.instance)
 ```
 
-## Quick usage (JS/TS)
+### iOS
+
+No special permission is required.  
+For reliable lock behavior, make sure your app supports the orientations you want in target settings and `Info.plist`.
+
+## Quick usage
 
 ```ts
 import {
   getOrientation,
   getDeviceOrientation,
+  getLockOrientation,
+  isLocked,
   lockToPortrait,
-  lockToLandscape,
+  lockToLandscapeLeft,
   unlockAllOrientations,
   Orientation,
 } from 'react-native-nitro-orientation'
 
-// UI orientation
-const ui = getOrientation()
+console.log('UI:', getOrientation())
+console.log('Device:', getDeviceOrientation())
+console.log('Lock orientation:', getLockOrientation())
+console.log('Is locked:', isLocked())
 
-// Device orientation from sensors
-const device = getDeviceOrientation()
-
-// Lock / unlock
 lockToPortrait()
-lockToLandscape()
+lockToLandscapeLeft()
 unlockAllOrientations()
 
-// Listen to orientation changes
-const handleOrientationChange = (orientation: 'portrait' | 'landscape') => {
-  console.log('Orientation changed to:', orientation)
-}
-
-Orientation.addOrientationListener(handleOrientationChange)
-
-// Don't forget to remove the listener when component unmounts
-Orientation.removeOrientationListener(handleOrientationChange)
+const onUiChange = (value: string) => console.log('UI changed:', value)
+Orientation.addOrientationListener(onUiChange)
+// cleanup
+Orientation.removeOrientationListener(onUiChange)
 ```
 
 ## API
 
-### Orientation Control
+### Query
 
-- `getOrientation(): string` — returns one of: `portrait`, `portraitUpsideDown`, `landscapeLeft`, `landscapeRight`, `unknown`
-- `getDeviceOrientation(): string` — orientation from device sensors
-- `lockToPortrait(): void`
-- `lockToPortraitUpsideDown(): void`
-- `lockToLandscape(): void` — sensor-based landscape (Android)
-- `lockToLandscapeLeft(): void`
-- `lockToLandscapeRight(): void`
-- `unlockAllOrientations(): void`
-- `getAutoRotateState(): boolean` — (Android) returns whether Auto-Rotate is enabled
+- `getOrientation(): OrientationValue`
+- `getDeviceOrientation(): OrientationValue`
+- `getLockOrientation(): OrientationValue`
+- `isLocked(): boolean`
+- `getAutoRotateState(): boolean`
 
-### Event Listening
+`OrientationValue`:
 
-- `Orientation.addOrientationListener(callback)` — add a listener for orientation changes
-- `Orientation.removeOrientationListener(callback)` — remove a previously added listener
+- `portrait`
+- `portraitUpsideDown`
+- `landscapeLeft`
+- `landscapeRight`
+- `unknown`
 
-The callback receives one parameter: `orientation: 'portrait' | 'landscape'`
+### Lock control
 
-## Events
+- `lockToPortrait()`
+- `lockToPortraitUpsideDown()`
+- `lockToLandscape()` (sensor-based landscape intent on Android)
+- `lockToLandscapeLeft()`
+- `lockToLandscapeRight()`
+- `unlockAllOrientations()`
 
-The module provides a simple event listening API through the `Orientation` manager:
+### Listeners
 
-```ts
-import { useEffect } from 'react'
-import { Orientation } from 'react-native-nitro-orientation'
+`Orientation` manager:
 
-useEffect(() => {
-  const handleOrientationChange = (orientation: 'portrait' | 'landscape') => {
-    console.log('Orientation changed to:', orientation)
-  }
+- `addOrientationListener(cb)` / `removeOrientationListener(cb)`
+- `addDeviceOrientationListener(cb)` / `removeDeviceOrientationListener(cb)`
+- `addLockListener(cb)` / `removeLockListener(cb)`
 
-  // Add listener
-  Orientation.addOrientationListener(handleOrientationChange)
+## Example (React)
 
-  // Cleanup
-  return () => {
-    Orientation.removeOrientationListener(handleOrientationChange)
-  }
-}, [])
-```
-
-## Advanced examples
-
-```ts
+```tsx
+import React, { useEffect, useState } from 'react'
+import { Button, Text, View } from 'react-native'
 import {
-  lockToLandscapeLeft,
-  lockToLandscapeRight,
-  lockToLandscape,
   Orientation,
+  getOrientation,
+  getDeviceOrientation,
+  getLockOrientation,
+  isLocked,
+  lockToPortrait,
+  lockToLandscapeRight,
+  unlockAllOrientations,
 } from 'react-native-nitro-orientation'
 
-// Lock to landscape left
-lockToLandscapeLeft()
-
-// Lock to landscape right
-lockToLandscapeRight()
-
-// Sensor-based landscape (Android)
-lockToLandscape()
-
-// Create a custom hook for orientation changes
-const useOrientation = () => {
-  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait')
+export function OrientationDemo() {
+  const [uiOrientation, setUiOrientation] = useState(getOrientation())
+  const [deviceOrientation, setDeviceOrientation] = useState(getDeviceOrientation())
+  const [lockOrientation, setLockOrientation] = useState(getLockOrientation())
 
   useEffect(() => {
-    const handleChange = (newOrientation: 'portrait' | 'landscape') => {
-      setOrientation(newOrientation)
-    }
+    const onUi = (value: string) => setUiOrientation(value)
+    const onDevice = (value: string) => setDeviceOrientation(value)
+    const onLock = (value: string) => setLockOrientation(value)
 
-    Orientation.addOrientationListener(handleChange)
+    Orientation.addOrientationListener(onUi)
+    Orientation.addDeviceOrientationListener(onDevice)
+    Orientation.addLockListener(onLock)
 
     return () => {
-      Orientation.removeOrientationListener(handleChange)
+      Orientation.removeOrientationListener(onUi)
+      Orientation.removeDeviceOrientationListener(onDevice)
+      Orientation.removeLockListener(onLock)
     }
   }, [])
 
-  return orientation
+  return (
+    <View style={{ padding: 16, gap: 8 }}>
+      <Text>UI: {uiOrientation}</Text>
+      <Text>Device: {deviceOrientation}</Text>
+      <Text>Lock: {lockOrientation}</Text>
+      <Text>isLocked: {String(isLocked())}</Text>
+      <Button title="Lock Portrait" onPress={lockToPortrait} />
+      <Button title="Lock Landscape Right" onPress={lockToLandscapeRight} />
+      <Button title="Unlock All" onPress={unlockAllOrientations} />
+    </View>
+  )
 }
 ```
 
-## Platform Support
+## Platform notes
 
-### Android
+- **Android**
+  - Most complete feature set.
+  - Depends on host-app `onConfigurationChanged` forwarding and lifecycle callback registration.
 
-- ✅ Full support
+- **iOS**
+  - Uses geometry update APIs where available.
+  - Actual lock behavior still depends on app-supported orientations.
+  - `getAutoRotateState()` reports platform capability as `true` (iOS does not expose an Android-style user toggle API).
 
-### iOS
+## Test checklist
 
-- 🚧 In development
+- [ ] UI orientation updates when rotating device/emulator
+- [ ] Device orientation listener receives updates
+- [ ] Lock listener updates for each lock/unlock action
+- [ ] `isLocked()` and `getLockOrientation()` reflect lock state correctly
+- [ ] `unlockAllOrientations()` restores free rotation behavior
+- [ ] Android flow verified with required MainActivity/MainApplication setup
+- [ ] iOS flow verified with supported orientations configured in app target
 
-## Troubleshooting
+## Nitro development
 
-- Events not emitted on Android: ensure `NitroOrientationActivityLifecycle` is registered in your `Application` and Nitro runtime provides `applicationContext`.
-- On iOS, if `requestGeometryUpdate` does not change UI orientation: verify `Info.plist` and `supportedInterfaceOrientationsFor` implementation.
-- Make sure to remove orientation listeners when components unmount to avoid memory leaks.
-
-## Migration / notes
-
-- Orientation strings used by the module: `portrait`, `portraitUpsideDown`, `landscapeLeft`, `landscapeRight`, `unknown`.
-- Event callbacks receive simplified orientation values: `'portrait' | 'landscape'`.
-- When updating spec files in `src/specs/*.nitro.ts`, regenerate Nitro artifacts:
+When changing `src/specs/*.nitro.ts`:
 
 ```bash
-npx nitro-codegen
+npx tsc && npx nitrogen --logLevel="debug"
 ```
 
-## Contributing
+Useful scripts:
 
-See `CONTRIBUTING.md` for contribution workflow. Run `npx nitro-codegen` after editing spec files.
-
-## Project structure
-
-- `android/` — native Android (Kotlin)
-- `ios/` — native iOS (Swift / ObjC bridge)
-- `src/` — TypeScript exports
-- `nitrogen/` — generated Nitro artifacts
-
-## Acknowledgements
-
-Special thanks to the following open-source projects which inspired and supported the development of this library:
-
-- [mrousavy/nitro](https://github.com/mrousavy/nitro) – for the Nitro Modules architecture and tooling
-- [react-native-orientation-locker](https://github.com/wonday/react-native-orientation-locker)
-- [react-native-neo-orientation](https://github.com/duguyihou/react-native-neo-orientation)
+- `npm run typecheck`
+- `npm run lint`
+- `npm run specs`
 
 ## License
 
 MIT © [Thành Công](https://github.com/tconns)
-
-
-<a href="https://www.buymeacoffee.com/tconns94" target="_blank">
-  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="200"/>
-</a>
