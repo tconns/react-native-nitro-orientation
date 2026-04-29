@@ -17,6 +17,9 @@ class NitroOrientation: HybridNitroOrientationSpec {
     private var lockListener: (String) -> Void = { _ in }
     private var lockOrientation: String = "unknown"
     private var isLockedValue = false
+    private var lastUiEmitAt: TimeInterval = 0
+    private var lastDeviceEmitAt: TimeInterval = 0
+    private let minEmitInterval: TimeInterval = 0.12
 
     func lockToLandscape() throws {
         lockTo(.landscapeLeft, orientationName: "landscapeLeft")
@@ -30,6 +33,14 @@ class NitroOrientation: HybridNitroOrientationSpec {
     private var lastDeviceOrientation: String = "unknown"
     
     private var orientationObserver: NSObjectProtocol?
+    
+    private func now() -> TimeInterval {
+        ProcessInfo.processInfo.systemUptime
+    }
+    
+    private func canEmit(lastAt: TimeInterval) -> Bool {
+        now() - lastAt >= minEmitInterval
+    }
     
     private func runOnMainSync<T>(_ work: () -> T) -> T {
         if Thread.isMainThread {
@@ -65,14 +76,16 @@ class NitroOrientation: HybridNitroOrientationSpec {
     private func handleOrientationChange() {
         let device = UIDevice.current.orientation
         let deviceOrientation = mapDeviceOrientation(device)
-        if deviceOrientation != lastDeviceOrientation {
+        if deviceOrientation != lastDeviceOrientation && canEmit(lastAt: lastDeviceEmitAt) {
             lastDeviceOrientation = deviceOrientation
+            lastDeviceEmitAt = now()
             sendEvent("deviceOrientationDidChange", orientation: deviceOrientation)
         }
         
         let uiOrientation = mapUIOrientation()
-        if uiOrientation != lastOrientation {
+        if uiOrientation != lastOrientation && canEmit(lastAt: lastUiEmitAt) {
             lastOrientation = uiOrientation
+            lastUiEmitAt = now()
             sendEvent("orientationDidChange", orientation: uiOrientation)
         }
     }
@@ -88,10 +101,15 @@ class NitroOrientation: HybridNitroOrientationSpec {
     }
     
     private func mapUIOrientation() -> String {
-        guard let orientation = UIApplication.shared
-            .connectedScenes
-            .compactMap({ ($0 as? UIWindowScene)?.interfaceOrientation })
-            .first else {
+        let foregroundScene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        
+        let fallbackScene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first
+        
+        guard let orientation = (foregroundScene ?? fallbackScene)?.interfaceOrientation else {
             return "unknown"
         }
         
@@ -182,12 +200,15 @@ class NitroOrientation: HybridNitroOrientationSpec {
         }
         
         if #available(iOS 16.0, *),
-           let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+           let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }) {
             scene.requestGeometryUpdate(.iOS(interfaceOrientations: mask)) { error in
                 if error == nil {
                     self.lastOrientation = orientationName
                     self.lockOrientation = orientationName
                     self.isLockedValue = orientationName != "unknown"
+                    self.lastUiEmitAt = self.now()
                     self.sendEvent("orientationDidChange", orientation: orientationName)
                     self.sendEvent("lockDidChange", orientation: orientationName)
                 } else {
@@ -199,6 +220,7 @@ class NitroOrientation: HybridNitroOrientationSpec {
             self.lastOrientation = orientationName
             self.lockOrientation = orientationName
             self.isLockedValue = orientationName != "unknown"
+            self.lastUiEmitAt = self.now()
             self.sendEvent("orientationDidChange", orientation: orientationName)
             self.sendEvent("lockDidChange", orientation: orientationName)
         }

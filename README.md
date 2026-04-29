@@ -65,14 +65,16 @@ For reliable lock behavior, make sure your app supports the orientations you wan
 
 ```ts
 import {
+  NativeOrientation,
   getOrientation,
   getDeviceOrientation,
   getLockOrientation,
+  getOrientationSnapshot,
+  subscribeOrientation,
   isLocked,
   lockToPortrait,
   lockToLandscapeLeft,
   unlockAllOrientations,
-  Orientation,
 } from 'react-native-nitro-orientation'
 
 console.log('UI:', getOrientation())
@@ -84,10 +86,15 @@ lockToPortrait()
 lockToLandscapeLeft()
 unlockAllOrientations()
 
-const onUiChange = (value: string) => console.log('UI changed:', value)
-Orientation.addOrientationListener(onUiChange)
-// cleanup
-Orientation.removeOrientationListener(onUiChange)
+const unsubscribe = subscribeOrientation((snapshot) => {
+  console.log('Snapshot changed:', snapshot)
+})
+unsubscribe()
+
+// Native-first access for performance-critical paths
+NativeOrientation.lockToPortrait()
+console.log('Native UI orientation:', NativeOrientation.getOrientation())
+console.log('Snapshot:', getOrientationSnapshot())
 ```
 
 ## API
@@ -125,56 +132,83 @@ Orientation.removeOrientationListener(onUiChange)
 - `addDeviceOrientationListener(cb)` / `removeDeviceOrientationListener(cb)`
 - `addLockListener(cb)` / `removeLockListener(cb)`
 
+Modern subscription API:
+
+- `subscribeOrientation(listener, options?): () => void`
+  - `options.event`: `change` (default), `ui`, `device`, `lock`
+- `getOrientationSnapshot(): OrientationSnapshot`
+- `orientationStore.subscribe/getSnapshot` for `useSyncExternalStore`
+
+Native-first path:
+
+- `NativeOrientation` exposes direct Nitro hybrid object calls for low-latency/high-throughput flows.
+
 ## Example (React)
 
 ```tsx
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { Button, Text, View } from 'react-native'
 import {
-  Orientation,
-  getOrientation,
-  getDeviceOrientation,
-  getLockOrientation,
-  isLocked,
+  orientationStore,
+  subscribeOrientation,
+  getOrientationSnapshot,
   lockToPortrait,
   lockToLandscapeRight,
   unlockAllOrientations,
 } from 'react-native-nitro-orientation'
+import { useSyncExternalStore } from 'react'
 
 export function OrientationDemo() {
-  const [uiOrientation, setUiOrientation] = useState(getOrientation())
-  const [deviceOrientation, setDeviceOrientation] = useState(getDeviceOrientation())
-  const [lockOrientation, setLockOrientation] = useState(getLockOrientation())
+  const snapshot = useSyncExternalStore(
+    orientationStore.subscribe,
+    orientationStore.getSnapshot
+  )
 
   useEffect(() => {
-    const onUi = (value: string) => setUiOrientation(value)
-    const onDevice = (value: string) => setDeviceOrientation(value)
-    const onLock = (value: string) => setLockOrientation(value)
-
-    Orientation.addOrientationListener(onUi)
-    Orientation.addDeviceOrientationListener(onDevice)
-    Orientation.addLockListener(onLock)
-
-    return () => {
-      Orientation.removeOrientationListener(onUi)
-      Orientation.removeDeviceOrientationListener(onDevice)
-      Orientation.removeLockListener(onLock)
-    }
+    const unsubscribeLock = subscribeOrientation(
+      (next) => console.log('Lock changed', next.lockOrientation),
+      { event: 'lock' }
+    )
+    return unsubscribeLock
   }, [])
 
   return (
     <View style={{ padding: 16, gap: 8 }}>
-      <Text>UI: {uiOrientation}</Text>
-      <Text>Device: {deviceOrientation}</Text>
-      <Text>Lock: {lockOrientation}</Text>
-      <Text>isLocked: {String(isLocked())}</Text>
+      <Text>UI: {snapshot.uiOrientation}</Text>
+      <Text>Device: {snapshot.deviceOrientation}</Text>
+      <Text>Lock: {snapshot.lockOrientation}</Text>
+      <Text>isLocked: {String(snapshot.isLocked)}</Text>
       <Button title="Lock Portrait" onPress={lockToPortrait} />
       <Button title="Lock Landscape Right" onPress={lockToLandscapeRight} />
       <Button title="Unlock All" onPress={unlockAllOrientations} />
+      <Text>{JSON.stringify(getOrientationSnapshot())}</Text>
     </View>
   )
 }
 ```
+
+## Performance baseline
+
+Use built-in metrics to validate event volume before/after optimization:
+
+```ts
+import {
+  runOrientationBenchmark,
+  getOrientationMetrics,
+  resetOrientationMetrics,
+} from 'react-native-nitro-orientation'
+
+resetOrientationMetrics()
+const result = await runOrientationBenchmark(5000)
+console.log('Benchmark:', result)
+console.log('Metrics:', getOrientationMetrics())
+```
+
+Recommended KPI targets:
+
+- reduce redundant callback volume by at least 30%
+- keep lock/unlock responsiveness visually instant
+- avoid stale state/race conditions in snapshot consumers
 
 ## Platform notes
 
