@@ -68,6 +68,16 @@ namespace margelo::nitro::orientation {
     void setChangeListener(const std::function<void(const std::string& /* orientation */)>& listener) override;
     void setDeviceOrientationListener(const std::function<void(const std::string& /* orientation */)>& listener) override;
     void setLockListener(const std::function<void(const std::string& /* orientation */)>& listener) override;
+    void createZone(const std::string& zoneId, const std::string& options) override;
+    void registerZoneHost(const std::string& zoneId, double nativeViewTag) override;
+    void unregisterZoneHost(const std::string& zoneId, double nativeViewTag) override;
+    void destroyZone(const std::string& zoneId) override;
+    void setZoneRotation(const std::string& zoneId, double angleDeg, const std::string& options) override;
+    void setZoneOrientation(const std::string& zoneId, const std::string& orientation) override;
+    void resetZoneRotation(const std::string& zoneId) override;
+    std::string getZoneSnapshot(const std::string& zoneId) override;
+    std::string getAllZoneSnapshots() override;
+    void setZoneListener(const std::function<void(const std::string& /* eventJson */)>& listener) override;
 
   private:
     jni::global_ref<JHybridNitroOrientationSpec::JavaPart> _javaPart;

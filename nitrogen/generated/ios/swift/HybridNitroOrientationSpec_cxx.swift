@@ -297,4 +297,121 @@ open class HybridNitroOrientationSpec_cxx {
       return bridge.create_Result_void_(__exceptionPtr)
     }
   }
+  
+  @inline(__always)
+  public final func createZone(zoneId: std.string, options: std.string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.createZone(zoneId: String(zoneId), options: String(options))
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func registerZoneHost(zoneId: std.string, nativeViewTag: Double) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.registerZoneHost(zoneId: String(zoneId), nativeViewTag: nativeViewTag)
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func unregisterZoneHost(zoneId: std.string, nativeViewTag: Double) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.unregisterZoneHost(zoneId: String(zoneId), nativeViewTag: nativeViewTag)
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func destroyZone(zoneId: std.string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.destroyZone(zoneId: String(zoneId))
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setZoneRotation(zoneId: std.string, angleDeg: Double, options: std.string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setZoneRotation(zoneId: String(zoneId), angleDeg: angleDeg, options: String(options))
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setZoneOrientation(zoneId: std.string, orientation: std.string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setZoneOrientation(zoneId: String(zoneId), orientation: String(orientation))
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func resetZoneRotation(zoneId: std.string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.resetZoneRotation(zoneId: String(zoneId))
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func getZoneSnapshot(zoneId: std.string) -> bridge.Result_std__string_ {
+    do {
+      let __result = try self.__implementation.getZoneSnapshot(zoneId: String(zoneId))
+      let __resultCpp = std.string(__result)
+      return bridge.create_Result_std__string_(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__string_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func getAllZoneSnapshots() -> bridge.Result_std__string_ {
+    do {
+      let __result = try self.__implementation.getAllZoneSnapshots()
+      let __resultCpp = std.string(__result)
+      return bridge.create_Result_std__string_(__resultCpp)
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_std__string_(__exceptionPtr)
+    }
+  }
+  
+  @inline(__always)
+  public final func setZoneListener(listener: bridge.Func_void_std__string) -> bridge.Result_void_ {
+    do {
+      try self.__implementation.setZoneListener(listener: { () -> (String) -> Void in
+        let __wrappedFunction = bridge.wrap_Func_void_std__string(listener)
+        return { (__eventJson: String) -> Void in
+          __wrappedFunction.call(std.string(__eventJson))
+        }
+      }())
+      return bridge.create_Result_void_()
+    } catch (let __error) {
+      let __exceptionPtr = __error.toCpp()
+      return bridge.create_Result_void_(__exceptionPtr)
+    }
+  }
 }

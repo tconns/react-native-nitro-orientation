@@ -1,12 +1,20 @@
 # react-native-nitro-orientation
 
-Native orientation utilities for React Native, powered by Nitro Modules.
+High-performance orientation utilities for React Native, powered by Nitro Modules.
 
 `react-native-nitro-orientation` provides APIs to:
 
 - read current UI orientation and device orientation
 - lock/unlock orientation modes
 - observe UI/device/lock changes through listeners
+
+## TL;DR for AI-generated examples
+
+If an AI agent generates integration code, follow this order:
+
+1. Use **Device Orientation API** for full-screen orientation lock/unlock.
+2. On Android, ensure `onConfigurationChanged` broadcast + lifecycle callback registration are present.
+3. Prefer `subscribeOrientation` over manual polling.
 
 ## Requirements
 
@@ -61,7 +69,12 @@ registerActivityLifecycleCallbacks(NitroOrientationActivityLifecycle.instance)
 No special permission is required.  
 For reliable lock behavior, make sure your app supports the orientations you want in target settings and `Info.plist`.
 
-## Quick usage
+## Choose the right API
+
+- **Device Orientation API**: lock/unlock app orientation (`lockToPortrait`, `unlockAllOrientations`, etc.)
+- **Native-first path**: use `NativeOrientation` for low-latency hot paths
+
+## Quick usage (device orientation)
 
 ```ts
 import {
@@ -95,6 +108,61 @@ unsubscribe()
 NativeOrientation.lockToPortrait()
 console.log('Native UI orientation:', NativeOrientation.getOrientation())
 console.log('Snapshot:', getOrientationSnapshot())
+```
+
+## React example (modern synchronized state)
+
+```tsx
+import React, { useEffect } from 'react'
+import { Button, Text, View } from 'react-native'
+import { useSyncExternalStore } from 'react'
+import {
+  orientationStore,
+  subscribeOrientation,
+  lockToPortrait,
+  lockToLandscapeRight,
+  unlockAllOrientations,
+} from 'react-native-nitro-orientation'
+
+export function OrientationDemo() {
+  const snapshot = useSyncExternalStore(
+    orientationStore.subscribe,
+    orientationStore.getSnapshot
+  )
+
+  useEffect(() => {
+    return subscribeOrientation(
+      (next) => console.log('Lock changed', next.lockOrientation),
+      { event: 'lock' }
+    )
+  }, [])
+
+  return (
+    <View style={{ padding: 16, gap: 8 }}>
+      <Text>UI: {snapshot.uiOrientation}</Text>
+      <Text>Device: {snapshot.deviceOrientation}</Text>
+      <Text>Lock: {snapshot.lockOrientation}</Text>
+      <Text>isLocked: {String(snapshot.isLocked)}</Text>
+      <Button title="Lock Portrait" onPress={lockToPortrait} />
+      <Button title="Lock Landscape Right" onPress={lockToLandscapeRight} />
+      <Button title="Unlock All" onPress={unlockAllOrientations} />
+    </View>
+  )
+}
+```
+
+## AI integration recipe (copy/paste prompt)
+
+Use this prompt when asking an AI assistant to scaffold usage:
+
+```txt
+Integrate react-native-nitro-orientation in a React Native screen.
+Requirements:
+- Use Device Orientation API for full-screen lock/unlock.
+- Use useSyncExternalStore with orientationStore for global orientation state.
+- Add proper cleanup for subscriptions.
+- On Android include onConfigurationChanged broadcast and lifecycle callback registration.
+- Do not poll orientation in a loop; use subscribe APIs.
 ```
 
 ## API
@@ -143,50 +211,6 @@ Native-first path:
 
 - `NativeOrientation` exposes direct Nitro hybrid object calls for low-latency/high-throughput flows.
 
-## Example (React)
-
-```tsx
-import React, { useEffect } from 'react'
-import { Button, Text, View } from 'react-native'
-import {
-  orientationStore,
-  subscribeOrientation,
-  getOrientationSnapshot,
-  lockToPortrait,
-  lockToLandscapeRight,
-  unlockAllOrientations,
-} from 'react-native-nitro-orientation'
-import { useSyncExternalStore } from 'react'
-
-export function OrientationDemo() {
-  const snapshot = useSyncExternalStore(
-    orientationStore.subscribe,
-    orientationStore.getSnapshot
-  )
-
-  useEffect(() => {
-    const unsubscribeLock = subscribeOrientation(
-      (next) => console.log('Lock changed', next.lockOrientation),
-      { event: 'lock' }
-    )
-    return unsubscribeLock
-  }, [])
-
-  return (
-    <View style={{ padding: 16, gap: 8 }}>
-      <Text>UI: {snapshot.uiOrientation}</Text>
-      <Text>Device: {snapshot.deviceOrientation}</Text>
-      <Text>Lock: {snapshot.lockOrientation}</Text>
-      <Text>isLocked: {String(snapshot.isLocked)}</Text>
-      <Button title="Lock Portrait" onPress={lockToPortrait} />
-      <Button title="Lock Landscape Right" onPress={lockToLandscapeRight} />
-      <Button title="Unlock All" onPress={unlockAllOrientations} />
-      <Text>{JSON.stringify(getOrientationSnapshot())}</Text>
-    </View>
-  )
-}
-```
-
 ## Performance baseline
 
 Use built-in metrics to validate event volume before/after optimization:
@@ -210,24 +234,19 @@ Recommended KPI targets:
 - keep lock/unlock responsiveness visually instant
 - avoid stale state/race conditions in snapshot consumers
 
-## Platform notes
+## Common integration pitfalls
 
-- **Android**
-  - Most complete feature set.
-  - Depends on host-app `onConfigurationChanged` forwarding and lifecycle callback registration.
+- Using polling instead of subscriptions (`subscribeOrientation`)
+- Missing Android host setup (`onConfigurationChanged`, lifecycle callback registration)
 
-- **iOS**
-  - Uses geometry update APIs where available.
-  - Actual lock behavior still depends on app-supported orientations.
-  - `getAutoRotateState()` reports platform capability as `true` (iOS does not expose an Android-style user toggle API).
-
-## Test checklist
+## Verification checklist
 
 - [ ] UI orientation updates when rotating device/emulator
 - [ ] Device orientation listener receives updates
 - [ ] Lock listener updates for each lock/unlock action
 - [ ] `isLocked()` and `getLockOrientation()` reflect lock state correctly
 - [ ] `unlockAllOrientations()` restores free rotation behavior
+- [ ] All orientation subscriptions are unsubscribed on unmount
 - [ ] Android flow verified with required MainActivity/MainApplication setup
 - [ ] iOS flow verified with supported orientations configured in app target
 
@@ -244,6 +263,7 @@ Useful scripts:
 - `npm run typecheck`
 - `npm run lint`
 - `npm run specs`
+
 
 ## License
 

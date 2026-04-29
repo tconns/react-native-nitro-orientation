@@ -108,5 +108,47 @@ namespace margelo::nitro::orientation {
     static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_std__string::javaobject> /* listener */)>("setLockListener_cxx");
     method(_javaPart, JFunc_void_std__string_cxx::fromCpp(listener));
   }
+  void JHybridNitroOrientationSpec::createZone(const std::string& zoneId, const std::string& options) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* zoneId */, jni::alias_ref<jni::JString> /* options */)>("createZone");
+    method(_javaPart, jni::make_jstring(zoneId), jni::make_jstring(options));
+  }
+  void JHybridNitroOrientationSpec::registerZoneHost(const std::string& zoneId, double nativeViewTag) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* zoneId */, double /* nativeViewTag */)>("registerZoneHost");
+    method(_javaPart, jni::make_jstring(zoneId), nativeViewTag);
+  }
+  void JHybridNitroOrientationSpec::unregisterZoneHost(const std::string& zoneId, double nativeViewTag) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* zoneId */, double /* nativeViewTag */)>("unregisterZoneHost");
+    method(_javaPart, jni::make_jstring(zoneId), nativeViewTag);
+  }
+  void JHybridNitroOrientationSpec::destroyZone(const std::string& zoneId) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* zoneId */)>("destroyZone");
+    method(_javaPart, jni::make_jstring(zoneId));
+  }
+  void JHybridNitroOrientationSpec::setZoneRotation(const std::string& zoneId, double angleDeg, const std::string& options) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* zoneId */, double /* angleDeg */, jni::alias_ref<jni::JString> /* options */)>("setZoneRotation");
+    method(_javaPart, jni::make_jstring(zoneId), angleDeg, jni::make_jstring(options));
+  }
+  void JHybridNitroOrientationSpec::setZoneOrientation(const std::string& zoneId, const std::string& orientation) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* zoneId */, jni::alias_ref<jni::JString> /* orientation */)>("setZoneOrientation");
+    method(_javaPart, jni::make_jstring(zoneId), jni::make_jstring(orientation));
+  }
+  void JHybridNitroOrientationSpec::resetZoneRotation(const std::string& zoneId) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<jni::JString> /* zoneId */)>("resetZoneRotation");
+    method(_javaPart, jni::make_jstring(zoneId));
+  }
+  std::string JHybridNitroOrientationSpec::getZoneSnapshot(const std::string& zoneId) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JString>(jni::alias_ref<jni::JString> /* zoneId */)>("getZoneSnapshot");
+    auto __result = method(_javaPart, jni::make_jstring(zoneId));
+    return __result->toStdString();
+  }
+  std::string JHybridNitroOrientationSpec::getAllZoneSnapshots() {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<jni::local_ref<jni::JString>()>("getAllZoneSnapshots");
+    auto __result = method(_javaPart);
+    return __result->toStdString();
+  }
+  void JHybridNitroOrientationSpec::setZoneListener(const std::function<void(const std::string& /* eventJson */)>& listener) {
+    static const auto method = _javaPart->javaClassStatic()->getMethod<void(jni::alias_ref<JFunc_void_std__string::javaobject> /* listener */)>("setZoneListener_cxx");
+    method(_javaPart, JFunc_void_std__string_cxx::fromCpp(listener));
+  }
 
 } // namespace margelo::nitro::orientation

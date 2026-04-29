@@ -63,6 +63,16 @@ namespace margelo::nitro::orientation {
       virtual void setChangeListener(const std::function<void(const std::string& /* orientation */)>& listener) = 0;
       virtual void setDeviceOrientationListener(const std::function<void(const std::string& /* orientation */)>& listener) = 0;
       virtual void setLockListener(const std::function<void(const std::string& /* orientation */)>& listener) = 0;
+      virtual void createZone(const std::string& zoneId, const std::string& options) = 0;
+      virtual void registerZoneHost(const std::string& zoneId, double nativeViewTag) = 0;
+      virtual void unregisterZoneHost(const std::string& zoneId, double nativeViewTag) = 0;
+      virtual void destroyZone(const std::string& zoneId) = 0;
+      virtual void setZoneRotation(const std::string& zoneId, double angleDeg, const std::string& options) = 0;
+      virtual void setZoneOrientation(const std::string& zoneId, const std::string& orientation) = 0;
+      virtual void resetZoneRotation(const std::string& zoneId) = 0;
+      virtual std::string getZoneSnapshot(const std::string& zoneId) = 0;
+      virtual std::string getAllZoneSnapshots() = 0;
+      virtual void setZoneListener(const std::function<void(const std::string& /* eventJson */)>& listener) = 0;
 
     protected:
       // Hybrid Setup

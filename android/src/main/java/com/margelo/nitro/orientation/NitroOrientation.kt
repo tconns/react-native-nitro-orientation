@@ -15,15 +15,32 @@ import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.WindowManager
 import android.provider.Settings
+import android.view.View
 import androidx.core.content.ContextCompat
+import org.json.JSONArray
+import org.json.JSONObject
+import java.lang.ref.WeakReference
 
 @DoNotStrip
 class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners {
+  private data class ZoneState(
+    var angleDeg: Double = 0.0,
+    var orientation: String = Names.PORTRAIT,
+    val attachedViews: MutableSet<Int> = mutableSetOf(),
+    var sequence: Long = 0,
+    var updatedAtMs: Long = 0,
+    var lastEmitAtMs: Long = 0
+  )
+
   private val reactContext = NitroModules.applicationContext ?: throw Exception("Context is null")
+    private val hostViewRefs = mutableMapOf<Int, WeakReference<View>>()
 
     private var uiOrientationCallback: ((String) -> Unit)? = null
     private var deviceOrientationCallback: ((String) -> Unit)? = null
     private var lockCallback: ((String) -> Unit)? = null
+    private var zoneCallback: ((String) -> Unit)? = null
+    private val zoneStates = mutableMapOf<String, ZoneState>()
+    private var zoneSequence = 0L
 
     private object Events {
       const val ORIENTATION_DID_CHANGE = "orientationDidChange"
@@ -55,6 +72,7 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
     private fun now() = SystemClock.uptimeMillis()
 
     private fun canEmit(lastAt: Long) = now() - lastAt >= minEmitIntervalMs
+    private fun nowEpochMs() = System.currentTimeMillis()
 
     private fun sendEvent(event: String, orientation: String) {
       when (event) {
@@ -84,6 +102,67 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
       if (orientation == lockOrientation) return
       lockOrientation = orientation
       sendEvent(Events.LOCK_DID_CHANGE, orientation)
+    }
+
+    private fun upsertZone(zoneId: String): ZoneState {
+      return zoneStates.getOrPut(zoneId) {
+        ZoneState(updatedAtMs = nowEpochMs())
+      }
+    }
+
+    private fun normalizeZoneOrientation(orientation: String): String {
+      return when (orientation) {
+        Names.PORTRAIT, Names.PORTRAIT_UPSIDE_DOWN, Names.LANDSCAPE_LEFT, Names.LANDSCAPE_RIGHT -> orientation
+        else -> Names.UNKNOWN
+      }
+    }
+
+    private fun angleForZoneOrientation(orientation: String): Double {
+      return when (orientation) {
+        Names.PORTRAIT -> 0.0
+        Names.LANDSCAPE_LEFT -> -90.0
+        Names.LANDSCAPE_RIGHT -> 90.0
+        Names.PORTRAIT_UPSIDE_DOWN -> 180.0
+        else -> 0.0
+      }
+    }
+
+    private fun findViewByTag(tag: Int): View? {
+      hostViewRefs[tag]?.get()?.let { return it }
+      return reactContext.currentActivity?.findViewById(tag)
+    }
+
+    private fun applyZoneTransform(zoneId: String) {
+      val state = zoneStates[zoneId] ?: return
+      state.attachedViews.forEach { tag ->
+        findViewByTag(tag)?.rotation = state.angleDeg.toFloat()
+      }
+    }
+
+    private fun zoneSnapshotJson(zoneId: String, state: ZoneState): JSONObject {
+      return JSONObject()
+        .put("zoneId", zoneId)
+        .put("angleDeg", state.angleDeg)
+        .put("orientation", state.orientation)
+        .put("attachedViews", state.attachedViews.size)
+        .put("sequence", state.sequence)
+        .put("updatedAt", state.updatedAtMs)
+    }
+
+    private fun emitZoneEvent(
+      zoneId: String,
+      source: String,
+      animationState: String = "idle",
+      force: Boolean = false
+    ) {
+      val state = zoneStates[zoneId] ?: return
+      if (!force && !canEmit(state.lastEmitAtMs)) return
+      state.lastEmitAtMs = now()
+      val payload = JSONObject()
+        .put("source", source)
+        .put("animationState", animationState)
+        .put("snapshot", zoneSnapshotJson(zoneId, state))
+      zoneCallback?.invoke(payload.toString())
     }
 
     private fun lockTo(requested: Int, orientationName: String) {
@@ -142,6 +221,17 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
     }
 
     init {
+      NitroOrientationZoneRegistry.setCallback { zoneId, hostView, isMounted ->
+        val viewTag = hostView.id
+        if (viewTag == View.NO_ID) return@setCallback
+        hostViewRefs[viewTag] = WeakReference(hostView)
+        if (isMounted) {
+          registerZoneHost(zoneId, viewTag.toDouble())
+        } else {
+          unregisterZoneHost(zoneId, viewTag.toDouble())
+          hostViewRefs.remove(viewTag)
+        }
+      }
       orientationListener = object : OrientationEventListener(reactContext, SensorManager.SENSOR_DELAY_UI) {
         override fun onOrientationChanged(degrees: Int) {
           val previousQuadrant = lastStableQuadrant
@@ -236,6 +326,97 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
       lockCallback = listener
     }
 
+    override fun createZone(zoneId: String, options: String) {
+      if (zoneId.isBlank()) return
+      upsertZone(zoneId)
+      emitZoneEvent(zoneId, "create", force = true)
+    }
+
+    override fun registerZoneHost(zoneId: String, nativeViewTag: Double) {
+      if (zoneId.isBlank()) return
+      val state = upsertZone(zoneId)
+      state.attachedViews.add(nativeViewTag.toInt())
+      zoneSequence += 1
+      state.sequence = zoneSequence
+      state.updatedAtMs = nowEpochMs()
+      applyZoneTransform(zoneId)
+      emitZoneEvent(zoneId, "mount", force = true)
+    }
+
+    override fun unregisterZoneHost(zoneId: String, nativeViewTag: Double) {
+      val state = zoneStates[zoneId] ?: return
+      state.attachedViews.remove(nativeViewTag.toInt())
+      zoneSequence += 1
+      state.sequence = zoneSequence
+      state.updatedAtMs = nowEpochMs()
+      emitZoneEvent(zoneId, "unmount", force = true)
+    }
+
+    override fun destroyZone(zoneId: String) {
+      val state = zoneStates[zoneId] ?: return
+      state.attachedViews.forEach { tag ->
+        findViewByTag(tag)?.rotation = 0f
+        hostViewRefs.remove(tag)
+      }
+      zoneStates.remove(zoneId)
+    }
+
+    override fun setZoneRotation(zoneId: String, angleDeg: Double, options: String) {
+      val state = upsertZone(zoneId)
+      if (kotlin.math.abs(state.angleDeg - angleDeg) < 0.1) return
+      val parsed = try {
+        JSONObject(options)
+      } catch (_: Exception) {
+        JSONObject()
+      }
+      val animated = parsed.optBoolean("animated", false)
+      state.angleDeg = angleDeg
+      zoneSequence += 1
+      state.sequence = zoneSequence
+      state.updatedAtMs = nowEpochMs()
+      applyZoneTransform(zoneId)
+      emitZoneEvent(zoneId, "update", animationState = if (animated) "running" else "idle")
+    }
+
+    override fun setZoneOrientation(zoneId: String, orientation: String) {
+      val state = upsertZone(zoneId)
+      state.orientation = normalizeZoneOrientation(orientation)
+      state.angleDeg = angleForZoneOrientation(state.orientation)
+      zoneSequence += 1
+      state.sequence = zoneSequence
+      state.updatedAtMs = nowEpochMs()
+      applyZoneTransform(zoneId)
+      emitZoneEvent(zoneId, "update")
+    }
+
+    override fun resetZoneRotation(zoneId: String) {
+      val state = upsertZone(zoneId)
+      state.angleDeg = 0.0
+      state.orientation = Names.PORTRAIT
+      zoneSequence += 1
+      state.sequence = zoneSequence
+      state.updatedAtMs = nowEpochMs()
+      applyZoneTransform(zoneId)
+      emitZoneEvent(zoneId, "reset", force = true)
+    }
+
+    override fun getZoneSnapshot(zoneId: String): String {
+      val state = zoneStates[zoneId] ?: return "{}"
+      return zoneSnapshotJson(zoneId, state).toString()
+    }
+
+    override fun getAllZoneSnapshots(): String {
+      val array = JSONArray()
+      zoneStates.forEach { (zoneId, state) ->
+        array.put(zoneSnapshotJson(zoneId, state))
+      }
+      return array.toString()
+    }
+
+    override fun setZoneListener(listener: (String) -> Unit) {
+      zoneCallback = listener
+    }
+
     override fun start() {
       orientationListener.enable()
       safeRegisterReceiver()
@@ -252,5 +433,8 @@ class NitroOrientation : HybridNitroOrientationSpec(), NitroOrientationListeners
       uiOrientationCallback = null
       deviceOrientationCallback = null
       lockCallback = null
+      zoneCallback = null
+      zoneStates.clear()
+      NitroOrientationZoneRegistry.setCallback { _, _, _ -> }
     }
 }

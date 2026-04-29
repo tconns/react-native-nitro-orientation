@@ -27,6 +27,16 @@ public protocol HybridNitroOrientationSpec_protocol: HybridObject {
   func setChangeListener(listener: @escaping (_ orientation: String) -> Void) throws -> Void
   func setDeviceOrientationListener(listener: @escaping (_ orientation: String) -> Void) throws -> Void
   func setLockListener(listener: @escaping (_ orientation: String) -> Void) throws -> Void
+  func createZone(zoneId: String, options: String) throws -> Void
+  func registerZoneHost(zoneId: String, nativeViewTag: Double) throws -> Void
+  func unregisterZoneHost(zoneId: String, nativeViewTag: Double) throws -> Void
+  func destroyZone(zoneId: String) throws -> Void
+  func setZoneRotation(zoneId: String, angleDeg: Double, options: String) throws -> Void
+  func setZoneOrientation(zoneId: String, orientation: String) throws -> Void
+  func resetZoneRotation(zoneId: String) throws -> Void
+  func getZoneSnapshot(zoneId: String) throws -> String
+  func getAllZoneSnapshots() throws -> String
+  func setZoneListener(listener: @escaping (_ eventJson: String) -> Void) throws -> Void
 }
 
 public extension HybridNitroOrientationSpec_protocol {

@@ -11,12 +11,32 @@ import React
 import NitroModules
 
 class NitroOrientation: HybridNitroOrientationSpec {
+    private final class WeakUIView {
+        weak var value: UIView?
+        
+        init(_ value: UIView?) {
+            self.value = value
+        }
+    }
+
+    private struct ZoneState {
+        var angleDeg: Double
+        var orientation: String
+        var attachedViews: Set<Int>
+        var sequence: Int64
+        var updatedAtMs: Int64
+        var lastEmitAt: TimeInterval
+    }
 
     private var uiOrientationListener: (String) -> Void = { _ in }
     private var deviceOrientationListener: (String) -> Void = { _ in }
     private var lockListener: (String) -> Void = { _ in }
     private var lockOrientation: String = "unknown"
     private var isLockedValue = false
+    private var zoneListener: (String) -> Void = { _ in }
+    private var zoneStates: [String: ZoneState] = [:]
+    private var zoneSequence: Int64 = 0
+    private var zoneHostViews: [Int: WeakUIView] = [:]
     private var lastUiEmitAt: TimeInterval = 0
     private var lastDeviceEmitAt: TimeInterval = 0
     private let minEmitInterval: TimeInterval = 0.12
@@ -42,6 +62,10 @@ class NitroOrientation: HybridNitroOrientationSpec {
         now() - lastAt >= minEmitInterval
     }
     
+    private func nowMs() -> Int64 {
+        Int64(Date().timeIntervalSince1970 * 1000)
+    }
+    
     private func runOnMainSync<T>(_ work: () -> T) -> T {
         if Thread.isMainThread {
             return work()
@@ -51,6 +75,17 @@ class NitroOrientation: HybridNitroOrientationSpec {
     
     override init() {
         super.init()
+        NitroOrientationZoneRegistry.shared.setCallbacks { [weak self] zoneId, hostView, isMounted in
+            guard let self else { return }
+            let hostKey = Int(bitPattern: Unmanaged.passUnretained(hostView).toOpaque())
+            self.zoneHostViews[hostKey] = WeakUIView(hostView)
+            if isMounted {
+                self.registerZoneHost(zoneId: zoneId, nativeViewTag: Double(hostKey))
+            } else {
+                self.unregisterZoneHost(zoneId: zoneId, nativeViewTag: Double(hostKey))
+                self.zoneHostViews.removeValue(forKey: hostKey)
+            }
+        }
         
         // Seed initial state so JS queries are meaningful
         let initialState = runOnMainSync {
@@ -234,5 +269,226 @@ class NitroOrientation: HybridNitroOrientationSpec {
         uiOrientationListener = { _ in }
         deviceOrientationListener = { _ in }
         lockListener = { _ in }
+        zoneListener = { _ in }
+        zoneStates.removeAll()
+        zoneHostViews.removeAll()
+        NitroOrientationZoneRegistry.shared.setCallbacks { _, _, _ in }
+    }
+    
+    private func normalizeOrientationForZone(_ orientation: String) -> String {
+        switch orientation {
+        case "portrait", "portraitUpsideDown", "landscapeLeft", "landscapeRight":
+            return orientation
+        default:
+            return "unknown"
+        }
+    }
+    
+    private func angleForOrientation(_ orientation: String) -> Double {
+        switch orientation {
+        case "portrait": return 0
+        case "landscapeLeft": return -90
+        case "landscapeRight": return 90
+        case "portraitUpsideDown": return 180
+        default: return 0
+        }
+    }
+    
+    private func viewFromTag(_ tag: Int) -> UIView? {
+        if let hostView = zoneHostViews[tag]?.value {
+            return hostView
+        }
+        if let keyWindow = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive })?
+            .windows.first(where: { $0.isKeyWindow }) {
+            return keyWindow.viewWithTag(tag)
+        }
+        return UIApplication.shared.windows.first?.viewWithTag(tag)
+    }
+    
+    private func applyZoneTransform(_ zoneId: String, animated: Bool, durationMs: Double = 160) {
+        guard let state = zoneStates[zoneId] else { return }
+        let radians = state.angleDeg * .pi / 180.0
+        for tag in state.attachedViews {
+            guard let view = viewFromTag(tag) else { continue }
+            if animated {
+                UIView.animate(withDuration: max(0, durationMs) / 1000.0) {
+                    view.transform = CGAffineTransform(rotationAngle: radians)
+                }
+            } else {
+                view.transform = CGAffineTransform(rotationAngle: radians)
+            }
+        }
+    }
+    
+    private func emitZoneEvent(zoneId: String, source: String, animationState: String = "idle", force: Bool = false) {
+        guard var state = zoneStates[zoneId] else { return }
+        if !force && !canEmit(lastAt: state.lastEmitAt) {
+            return
+        }
+        state.lastEmitAt = now()
+        zoneStates[zoneId] = state
+        let payload: [String: Any] = [
+            "source": source,
+            "animationState": animationState,
+            "snapshot": [
+                "zoneId": zoneId,
+                "angleDeg": state.angleDeg,
+                "orientation": state.orientation,
+                "attachedViews": state.attachedViews.count,
+                "sequence": state.sequence,
+                "updatedAt": state.updatedAtMs
+            ]
+        ]
+        if let data = try? JSONSerialization.data(withJSONObject: payload),
+           let json = String(data: data, encoding: .utf8) {
+            zoneListener(json)
+        }
+    }
+    
+    private func upsertZone(_ zoneId: String) -> ZoneState {
+        if let state = zoneStates[zoneId] {
+            return state
+        }
+        let state = ZoneState(
+            angleDeg: 0,
+            orientation: "portrait",
+            attachedViews: [],
+            sequence: 0,
+            updatedAtMs: nowMs(),
+            lastEmitAt: 0
+        )
+        zoneStates[zoneId] = state
+        return state
+    }
+    
+    func createZone(zoneId: String, options: String) {
+        _ = options
+        guard !zoneId.isEmpty else { return }
+        _ = upsertZone(zoneId)
+        emitZoneEvent(zoneId: zoneId, source: "create", force: true)
+    }
+    
+    func registerZoneHost(zoneId: String, nativeViewTag: Double) {
+        guard !zoneId.isEmpty else { return }
+        var state = upsertZone(zoneId)
+        let tag = Int(nativeViewTag)
+        state.attachedViews.insert(tag)
+        zoneSequence += 1
+        state.sequence = zoneSequence
+        state.updatedAtMs = nowMs()
+        zoneStates[zoneId] = state
+        applyZoneTransform(zoneId, animated: false)
+        emitZoneEvent(zoneId: zoneId, source: "mount", force: true)
+    }
+    
+    func unregisterZoneHost(zoneId: String, nativeViewTag: Double) {
+        guard var state = zoneStates[zoneId] else { return }
+        let tag = Int(nativeViewTag)
+        state.attachedViews.remove(tag)
+        zoneSequence += 1
+        state.sequence = zoneSequence
+        state.updatedAtMs = nowMs()
+        zoneStates[zoneId] = state
+        emitZoneEvent(zoneId: zoneId, source: "unmount", force: true)
+    }
+    
+    func destroyZone(zoneId: String) {
+        guard let state = zoneStates[zoneId] else { return }
+        for tag in state.attachedViews {
+            viewFromTag(tag)?.transform = .identity
+            zoneHostViews.removeValue(forKey: tag)
+        }
+        zoneStates.removeValue(forKey: zoneId)
+    }
+    
+    func setZoneRotation(zoneId: String, angleDeg: Double, options: String) {
+        var state = upsertZone(zoneId)
+        if abs(state.angleDeg - angleDeg) < 0.1 {
+            return
+        }
+        var animated = false
+        var durationMs = 160.0
+        if let data = options.data(using: .utf8),
+           let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            animated = (object["animated"] as? Bool) ?? false
+            durationMs = (object["durationMs"] as? Double) ?? 160.0
+        }
+        state.angleDeg = angleDeg
+        zoneSequence += 1
+        state.sequence = zoneSequence
+        state.updatedAtMs = nowMs()
+        zoneStates[zoneId] = state
+        applyZoneTransform(zoneId, animated: animated, durationMs: durationMs)
+        emitZoneEvent(
+            zoneId: zoneId,
+            source: "update",
+            animationState: animated ? "running" : "idle"
+        )
+    }
+    
+    func setZoneOrientation(zoneId: String, orientation: String) {
+        let normalized = normalizeOrientationForZone(orientation)
+        var state = upsertZone(zoneId)
+        state.orientation = normalized
+        state.angleDeg = angleForOrientation(normalized)
+        zoneSequence += 1
+        state.sequence = zoneSequence
+        state.updatedAtMs = nowMs()
+        zoneStates[zoneId] = state
+        applyZoneTransform(zoneId, animated: false)
+        emitZoneEvent(zoneId: zoneId, source: "update")
+    }
+    
+    func resetZoneRotation(zoneId: String) {
+        var state = upsertZone(zoneId)
+        state.angleDeg = 0
+        state.orientation = "portrait"
+        zoneSequence += 1
+        state.sequence = zoneSequence
+        state.updatedAtMs = nowMs()
+        zoneStates[zoneId] = state
+        applyZoneTransform(zoneId, animated: false)
+        emitZoneEvent(zoneId: zoneId, source: "reset", force: true)
+    }
+    
+    func getZoneSnapshot(zoneId: String) -> String {
+        guard let state = zoneStates[zoneId] else { return "{}" }
+        let payload: [String: Any] = [
+            "zoneId": zoneId,
+            "angleDeg": state.angleDeg,
+            "orientation": state.orientation,
+            "attachedViews": state.attachedViews.count,
+            "sequence": state.sequence,
+            "updatedAt": state.updatedAtMs
+        ]
+        if let data = try? JSONSerialization.data(withJSONObject: payload),
+           let json = String(data: data, encoding: .utf8) {
+            return json
+        }
+        return "{}"
+    }
+    
+    func getAllZoneSnapshots() -> String {
+        let snapshots: [[String: Any]] = zoneStates.map { zoneId, state in
+            [
+                "zoneId": zoneId,
+                "angleDeg": state.angleDeg,
+                "orientation": state.orientation,
+                "attachedViews": state.attachedViews.count,
+                "sequence": state.sequence,
+                "updatedAt": state.updatedAtMs
+            ]
+        }
+        if let data = try? JSONSerialization.data(withJSONObject: snapshots),
+           let json = String(data: data, encoding: .utf8) {
+            return json
+        }
+        return "[]"
+    }
+    
+    func setZoneListener(listener: @escaping (String) -> Void) {
+        zoneListener = listener
     } 
 }

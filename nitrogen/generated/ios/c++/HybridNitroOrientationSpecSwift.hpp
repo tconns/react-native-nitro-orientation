@@ -161,6 +161,70 @@ namespace margelo::nitro::orientation {
         std::rethrow_exception(__result.error());
       }
     }
+    inline void createZone(const std::string& zoneId, const std::string& options) override {
+      auto __result = _swiftPart.createZone(zoneId, options);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void registerZoneHost(const std::string& zoneId, double nativeViewTag) override {
+      auto __result = _swiftPart.registerZoneHost(zoneId, std::forward<decltype(nativeViewTag)>(nativeViewTag));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void unregisterZoneHost(const std::string& zoneId, double nativeViewTag) override {
+      auto __result = _swiftPart.unregisterZoneHost(zoneId, std::forward<decltype(nativeViewTag)>(nativeViewTag));
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void destroyZone(const std::string& zoneId) override {
+      auto __result = _swiftPart.destroyZone(zoneId);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setZoneRotation(const std::string& zoneId, double angleDeg, const std::string& options) override {
+      auto __result = _swiftPart.setZoneRotation(zoneId, std::forward<decltype(angleDeg)>(angleDeg), options);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void setZoneOrientation(const std::string& zoneId, const std::string& orientation) override {
+      auto __result = _swiftPart.setZoneOrientation(zoneId, orientation);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline void resetZoneRotation(const std::string& zoneId) override {
+      auto __result = _swiftPart.resetZoneRotation(zoneId);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
+    inline std::string getZoneSnapshot(const std::string& zoneId) override {
+      auto __result = _swiftPart.getZoneSnapshot(zoneId);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline std::string getAllZoneSnapshots() override {
+      auto __result = _swiftPart.getAllZoneSnapshots();
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+      auto __value = std::move(__result.value());
+      return __value;
+    }
+    inline void setZoneListener(const std::function<void(const std::string& /* eventJson */)>& listener) override {
+      auto __result = _swiftPart.setZoneListener(listener);
+      if (__result.hasError()) [[unlikely]] {
+        std::rethrow_exception(__result.error());
+      }
+    }
 
   private:
     NitroOrientation::HybridNitroOrientationSpec_cxx _swiftPart;

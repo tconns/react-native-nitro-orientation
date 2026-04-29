@@ -28,6 +28,16 @@ namespace margelo::nitro::orientation {
       prototype.registerHybridMethod("setChangeListener", &HybridNitroOrientationSpec::setChangeListener);
       prototype.registerHybridMethod("setDeviceOrientationListener", &HybridNitroOrientationSpec::setDeviceOrientationListener);
       prototype.registerHybridMethod("setLockListener", &HybridNitroOrientationSpec::setLockListener);
+      prototype.registerHybridMethod("createZone", &HybridNitroOrientationSpec::createZone);
+      prototype.registerHybridMethod("registerZoneHost", &HybridNitroOrientationSpec::registerZoneHost);
+      prototype.registerHybridMethod("unregisterZoneHost", &HybridNitroOrientationSpec::unregisterZoneHost);
+      prototype.registerHybridMethod("destroyZone", &HybridNitroOrientationSpec::destroyZone);
+      prototype.registerHybridMethod("setZoneRotation", &HybridNitroOrientationSpec::setZoneRotation);
+      prototype.registerHybridMethod("setZoneOrientation", &HybridNitroOrientationSpec::setZoneOrientation);
+      prototype.registerHybridMethod("resetZoneRotation", &HybridNitroOrientationSpec::resetZoneRotation);
+      prototype.registerHybridMethod("getZoneSnapshot", &HybridNitroOrientationSpec::getZoneSnapshot);
+      prototype.registerHybridMethod("getAllZoneSnapshots", &HybridNitroOrientationSpec::getAllZoneSnapshots);
+      prototype.registerHybridMethod("setZoneListener", &HybridNitroOrientationSpec::setZoneListener);
     });
   }
 

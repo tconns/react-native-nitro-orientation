@@ -18,4 +18,14 @@ export interface NitroOrientation extends HybridObject<{
   setChangeListener(listener: (orientation: string) => void): void
   setDeviceOrientationListener(listener: (orientation: string) => void): void
   setLockListener(listener: (orientation: string) => void): void
+  createZone(zoneId: string, options: string): void
+  registerZoneHost(zoneId: string, nativeViewTag: number): void
+  unregisterZoneHost(zoneId: string, nativeViewTag: number): void
+  destroyZone(zoneId: string): void
+  setZoneRotation(zoneId: string, angleDeg: number, options: string): void
+  setZoneOrientation(zoneId: string, orientation: string): void
+  resetZoneRotation(zoneId: string): void
+  getZoneSnapshot(zoneId: string): string
+  getAllZoneSnapshots(): string
+  setZoneListener(listener: (eventJson: string) => void): void
 }
